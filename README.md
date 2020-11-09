@@ -1,1 +1,1 @@
-# Mediation Analysis w/ BRMS
+## Wonderful Wednesdays Entries
