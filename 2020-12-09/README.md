@@ -6,6 +6,6 @@ Visualizing Risk Prediction Models. For each predictor, a color bar represents t
 
 ## [Visualize a prediction model w/ ModelStudio](https://rpubs.com/acalatroni/709891)
 
-<img src="https://raw.githubusercontent.com/agstn/WW/main/2020-12-09/viz_ms_edited.png" width="100%" height="100%">
+<img src="https://raw.githubusercontent.com/agstn/WW/main/2020-12-09/viz_ms_edited.png" width="70%" height="70%">
 
 
