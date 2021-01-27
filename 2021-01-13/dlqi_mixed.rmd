@@ -1,0 +1,687 @@
+---
+title:  "<h4> <a href='https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-01-13'> Visualization of DLQI Mixed Models Results</a> by Agustin Calatroni"
+output:
+  html_document:
+    self_containded: TRUE
+    code_download: yes
+    toc: false
+---
+
+<style type="text/css">
+.main-container {
+max-width: 1200px;
+margin-left: auto;
+margin-right: auto;}
+</style>
+
+```{r setup, include=FALSE}
+options(width = 200)
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE, comment = NA, cache = FALSE)
+```
+
+```{r packages}
+pacman::p_load(rio, tidyverse)
+pacman::p_load(lme4, emmeans)
+pacman::p_load(ggdist, distributional)
+pacman::p_load(gtsummary)
+#devtools::install_github("teunbrand/ggh4x")
+library(ggh4x)
+pacman::p_load(ggdendro)
+pacman::p_load(ggtext)
+pacman::p_load(patchwork)
+pacman::p_load(gt)
+```
+
+```{r import data}
+df1 <- import("https://raw.githubusercontent.com/VIS-SIG/Wonderful-Wednesdays/master/data/2021/2021-01-13/ww2020_dlqi.csv") %>% 
+   drop_na(DLQI_SCORE) %>% 
+   mutate(VISIT_i = as.integer(as.factor(VISIT)))
+
+export(df1, "dlqi_mixed.csv")
+```
+
+```{r eval=FALSE, include=FALSE}
+# fun code to derive change
+df1_chg <- import("https://raw.githubusercontent.com/VIS-SIG/Wonderful-Wednesdays/master/data/2021/2021-01-13/ww2020_dlqi.csv") %>% 
+   select(USUBJID, VISIT, TRT, starts_with("DLQI")) %>% 
+   arrange(USUBJID, VISIT) %>% 
+   group_by(USUBJID, TRT) %>% 
+   # filter(n() > 1) %>% # keep participants with 2 visits
+   transmute(across(starts_with("DLQI"), ~.x - lag(.x), .names = "{.col}_CHG")) %>%
+   rowwise() %>% 
+   filter( sum(is.na(c_across(starts_with("DLQI")))) < 11 )
+```
+
+```{r variable labels}
+dl <- c(DLQI101 =	'How Itchy, Sore, Painful, Stinging <br><br>DLQI101',
+        DLQI102 =	'How Embarrassed, Self Conscious <br><br>DLQI102',
+        DLQI103 =	'Interfered Shopping, Home, Yard <br><br>DLQI103',
+        DLQI104 =	'Influenced Clothes You Wear <br><br>DLQI104',
+        DLQI105 =	'Affected Social, Leisure Activity <br><br>DLQI105',
+        DLQI106 =	'Made It Difficult to Do Any Sports <br><br>DLQI106',
+        DLQI107 =	'Prevented Working or Studying <br><br>DLQI107',
+        DLQI108 =	'Problem Partner, Friends, Relative <br><br>DLQI108',
+        DLQI109 =	'Caused Any Sexual Difficulties <br><br>DLQI109',
+        DLQI110 =	'How Much a Problem is Treatment <br><br>DLQI110',
+        DLQI_SCORE =	'**DLQI Total Score** <br><br>DLQI_SCORE')
+
+cl <- c(MEAN  = "TRT by VISIT",
+        DIFF  = "Within TRT between VISIT Differences",
+        DELTA = "Between TRT between VISIT Difference")
+```
+
+```{r eval=FALSE, include=FALSE}
+# Mini Mixed-Model example
+m <- lmer(DLQI_SCORE ~ VISIT*TRT + (1|USUBJID), data = df1)
+e <- emmeans(m, ~ VISIT*TRT)
+s <- eff_size(e, sigma = sigma(m), edf = 700, method = 'identity')
+c <- contrast(e, method = list(diff_a = c(-1, 1,  0, 0),
+                               diff_b = c( 0, 0, -1, 1),
+                               diff_d = c(1, -1, -1, 1)))
+f <- eff_size(c, sigma = sigma(m), edf = 700, method = 'identity')
+
+summary(e, infer = TRUE)
+summary(c, infer = TRUE)
+
+# Mini Repeated Mixed-Model example
+pacman::p_load(nlme)
+m <- gls(DLQI_SCORE ~ VISIT*TRT,
+         data = df1,
+         method = "REML",
+         correlation = nlme::corSymm( form = ~VISIT_i|USUBJID),
+         weights     = nlme::varIdent(form = ~1|VISIT))
+
+e <- emmeans(m, ~ VISIT*TRT, mode = "df.error")
+s <- eff_size(e, sigma = sigma(m), edf = 700, method = 'identity')
+c <- contrast(e, method = list(diff_a = c(-1, 1,  0, 0),
+                               diff_b = c( 0, 0, -1, 1),
+                               diff_d = c(1, -1, -1, 1)))
+f <- eff_size(c, sigma = sigma(m), edf = 700, method = 'identity')
+
+summary(e, infer = TRUE)
+summary(c, infer = TRUE)
+
+# Mini bayesian example
+pacman::p_load(brms)
+m <- brm(DLQI_SCORE ~ VISIT*TRT + (1 | USUBJID), data = df1, family = gaussian())
+e <- emmeans(m, ~ VISIT*TRT, point.est = mean)
+s <- contrast(e, method = list(diff_a = c(-1, 1,  0, 0),
+                               diff_b = c( 0, 0, -1, 1),
+                               diff_d = c(1, -1, -1, 1)))
+
+summary(e, point.est = mean, infer = TRUE)
+summary(s, point.est = mean, infer = TRUE)
+```
+
+```{r run ALL models}
+df2 <- df1 %>% 
+   pivot_longer(cols = contains("DLQI"),
+                names_to = "VAR",
+                values_to = "VAL") %>% 
+   nest_by(VAR) %>% 
+   mutate(m = list( lmer(VAL ~ VISIT*TRT + (1|USUBJID), data = data) ), 
+          e = list( emmeans(m, ~ VISIT*TRT) ),
+          s = list( eff_size(e, sigma = sigma(m), edf = 700, method = 'identity') ),
+          c = list( contrast(e, method = list(diff_a = c(-1, 1,  0, 0),
+                                              diff_b = c( 0, 0, -1, 1),
+                                              diff_d = c(1, -1, -1, 1))) ),
+          f = list( eff_size(c, sigma = sigma(m), edf = 700, method = 'identity') ),
+          r = list(
+             bind_rows(
+                summary(e, infer = TRUE) %>% as.data.frame(),
+                summary(c, infer = TRUE) %>% as.data.frame() %>% 
+                   rename(emmean = estimate, TRT = contrast) ) %>% 
+                mutate(contrast = paste(VISIT, TRT))
+          ),
+          g = list(
+             bind_rows(
+                summary(s, infer = TRUE) %>% as.data.frame(),
+                summary(f, infer = TRUE) %>% as.data.frame()  )
+          ),
+   )
+```
+
+
+```{r unnest raw}
+df3 <- df2 %>% 
+   select(VAR, r) %>% 
+   unnest(r) %>% 
+   mutate(contrast = str_remove(contrast, "NA ")) %>% 
+   mutate(GRP = case_when(
+      contrast  %in% c("Baseline A", "Week 16 A",
+                       "Baseline B", "Week 16 B") ~ "MEAN",
+      contrast  %in% c("diff_a", "diff_b")        ~ "DIFF",
+      contrast  %in% c("diff_d")                  ~ "DELTA")
+   ) %>% 
+   mutate(TRT = case_when(
+      contrast  %in% c("Baseline A", "Week 16 A", "diff_a") ~ "A",
+      contrast  %in% c("Baseline B", "Week 16 B", "diff_b") ~ "B")
+   ) %>% 
+   mutate(VISIT = case_when(
+      contrast  %in% c("Baseline A", "Baseline B") ~ "Baseline",
+      contrast  %in% c("Week 16 A", "Week 16 B")   ~ "Week 16")
+   )
+```
+
+```{r unnest Standardized}
+df3s <- df2 %>% 
+   select(VAR, g) %>% 
+   unnest(g) %>% 
+   mutate(GRP = case_when(
+      contrast  %in% c("Baseline A", "Week 16 A",
+                       "Baseline B", "Week 16 B") ~ "MEAN",
+      contrast  %in% c("diff_a", "diff_b")        ~ "DIFF",
+      contrast  %in% c("diff_d")                  ~ "DELTA")
+   ) %>% 
+   mutate(TRT = case_when(
+      contrast  %in% c("Baseline A", "Week 16 A", "diff_a") ~ "A",
+      contrast  %in% c("Baseline B", "Week 16 B", "diff_b") ~ "B")
+   ) %>% 
+   mutate(VISIT = case_when(
+      contrast  %in% c("Baseline A", "Baseline B") ~ "Baseline",
+      contrast  %in% c("Week 16 A", "Week 16 B")   ~ "Week 16")
+   ) 
+```
+
+```{r dendogram1}
+y1 <- df1 %>% 
+   #filter(VISIT == "Baseline") %>% 
+   select(starts_with("DLQI"))
+
+c1 <- cor(y1, method="pearson")
+d1 <- as.dist(1-c1)
+h1 <- hclust(d1, method = "complete")
+
+gg_d1 <- ggdendrogram(h1, rotate = TRUE) +
+   labs(title = " ") +
+   theme_dendro() +
+   theme(plot.margin = margin(0, 0, 0, 0, "pt"))
+
+df3s <- df3s %>% 
+   mutate(VAR = factor(VAR, levels = rev(h1$labels[h1$order]) ),
+          GRP = factor(GRP, levels = c("MEAN","DIFF","DELTA")) )
+
+df3 <- df3 %>% 
+   mutate(VAR = factor(VAR, levels = rev(h1$labels[h1$order]) ),
+          GRP = factor(GRP, levels = c("MEAN","DIFF","DELTA")) )
+```
+
+
+```{r table data}
+df4 <- df3 %>% 
+   select(VAR, C = contrast, E = emmean, L = lower.CL, U = upper.CL, P = p.value) %>%
+   mutate(C = factor(C, labels = c("B_A","B_B","D_A","D_B","D_D","W_A","W_B")) %>% 
+             fct_relevel("B_A","B_B","W_A","W_B","D_A","D_B","D_D")
+   ) %>% 
+   pivot_wider(id_cols = VAR,
+               names_from = C,
+               values_from = c(E, L, U, P))
+
+df4s <- df3s %>% 
+   select(VAR, C = contrast, E = effect.size, L = lower.CL, U = upper.CL, P = p.value) %>%
+   mutate(C = factor(C, labels = c("B_A","B_B","D_A","D_B","D_D","W_A","W_B")) %>% 
+             fct_relevel("B_A","B_B","W_A","W_B","D_A","D_B","D_D")
+   ) %>% 
+   pivot_wider(id_cols = VAR,
+               names_from = C,
+               values_from = c(E, L, U, P))
+
+df5 <- bind_rows(df4 %>% mutate(MODEL = "Raw"),
+                 df4s %>% mutate(MODEL = "Standardized"))
+```
+
+```{r gg_f1}
+# Figure F1
+gg_f1 <- ggplot(data = df3s,
+                aes(x = effect.size,
+                    y = VAR)) +
+   geom_vline(data = tribble(~GRP, ~VAL,
+                             "MEAN", NA,
+                             "DIFF", 0,
+                             "DELTA",0) %>% 
+                 mutate(GRP = factor(GRP) %>% fct_relevel("MEAN","DIFF","DELTA")), 
+              aes(xintercept = VAL), color = 'gray50' ) +
+   geom_vline(data = df3s %>% 
+                 filter(GRP == "MEAN", VISIT == "Baseline") %>% 
+                 select(GRP, VAR, effect.size) %>% 
+                 group_by(GRP, VAR) %>%
+                 summarize(xint = mean(effect.size)),
+              aes(xintercept = xint), color = 'gray50') +
+   stat_dist_halfeye(ggsubset(TRT == "A"),
+                     mapping = aes(fill1 = contrast,
+                                   color1 = contrast,
+                                   dist = dist_student_t(df = df, mu = effect.size, sigma = SE)),
+                     .width = c(0.95),
+                     alpha = 0.5,
+                     justification = -0.10,
+                     size = 1,
+                     side = 'top') +
+   stat_dist_halfeye(ggsubset(TRT == "B"),
+                     mapping = aes(fill2 = contrast,
+                                   color2 = contrast,
+                                   dist = dist_student_t(df = df, mu = effect.size, sigma = SE)),
+                     .width = c(0.95),
+                     alpha = 0.5,
+                     justification = 1.10,
+                     size = 1,
+                     side = 'bottom') +
+   stat_dist_halfeye(ggsubset(GRP == "DELTA"),
+                     mapping = aes(dist = dist_student_t(df = df, mu = effect.size, sigma = SE)),
+                     .width = c(0.95),
+                     size = 1,
+                     side = 'both') +
+   geom_richtext(ggsubset(GRP == "DELTA"),
+                 mapping = aes(y = 1,
+                               x = 3.7,
+                               label = str_glue("{style_ratio(effect.size)} 
+                                             ({style_ratio(lower.CL)}, {style_ratio(upper.CL)}) <br>
+                                              {style_pvalue(p.value, 2, prepend_p = TRUE)}")),
+                 size = 2.5,
+                 hjust = "inward",
+                 color = 'gray75',
+                 text.color = 'black',
+                 fill = 'white') +
+   scale_listed(scalelist = list(
+      scale_fill_manual(values  = RColorBrewer::brewer.pal(9,"Blues")[c(5,7,8)],  aesthetics = "fill1"),
+      scale_fill_manual(values  = RColorBrewer::brewer.pal(9,"Greens")[c(5,7,8)], aesthetics = "fill2"),
+      scale_color_manual(values = RColorBrewer::brewer.pal(9,"Blues")[c(5,7,8)],  aesthetics = "color1"),
+      scale_color_manual(values = RColorBrewer::brewer.pal(9,"Greens")[c(5,7,8)], aesthetics = "color2")), 
+      replaces = c("fill", "fill", "color", "color")) +
+   facet_grid(VAR ~ GRP,
+              scales = 'free_y',
+              switch = 'y',
+              labeller = labeller(VAR = dl, GRP = cl)) +
+   #force_panelsizes(cols = c(3,2,2)) +
+   scale_y_discrete(position = "right") +
+   labs(x = "Standardized effect-size (_Cohen's d_)",
+        y = NULL) +
+   theme_bw() +
+   theme(plot.margin = margin(5.5, 0, 5.5, 5.5, "pt"),
+         legend.position   = "none",
+         strip.text.y.left = element_markdown(angle = 0, hjust = 1),
+         strip.placement   = "outside", 
+         axis.ticks.y.right = element_blank(),
+         axis.text.y.right  = element_blank(),
+         axis.title.x = element_markdown(hjust = 0.5)
+   )
+```
+
+#### {.tabset .tabset-pills}
+
+##### Figure
+
+```{r gg_f1 combined, fig.height = 9.5, fig.width = 12}
+gg_f1 + gg_d1 +
+   plot_layout(widths = c(6,1)) +
+   plot_annotation(
+      title     = "Phase 3 Randomized Clinical Trial Mixed-Model Results evaluating quality of life **DLQI Total Scale** & Individual Subscales",
+      subtitle  = "Standardized Effects (MEAN) and 95% CI for 
+      <span style='color:#2171B5;'><b>Placebo (n=150) </b></span> and 
+      <span style='color:#238B45;'><b>Active (n=450) </b></span> at
+      <span style='color:#6BAED6;'>Baseline</span>|<span style='color:#74C476;'>Baseline</span> and 
+      <span style='color:#2171B5;'>Week 16</span>|<span style='color:#238B45;'>Week 16</span>
+      <span style='font-size:8pt; color:black'>vertical lines are mean results at Baseline</span> <br>
+      Standardized Difference (DELTA) and 95% CI between VISIT within TRT (i.e.
+      <span style='color:#238B45;'><b>Active</b></span>
+      <span style='color:#238B45;'>(Week 16</span> -
+      <span style='color:#74C476;'>Baseline)</span>
+      <span style='font-size:8pt; color:black'>overlapping densities to the vertical lines not significant different from 0</span> <br>
+      Standardized Difference (DELTA-DELTA) and 95% CI between TRT between VISIT <br>
+      Hierarchical Clustering dendrogram results of Pearson correlation between **DLQI Total** & Individual Subscales",
+      theme = theme(plot.title.position = "plot",
+                    plot.title    = element_markdown(lineheight = 1.1),
+                    plot.subtitle = element_markdown(lineheight = 1.1))
+   )
+```
+
+##### Table
+```{r}
+# 1-ESTIMATE Estimate, Lower, Upper, Pvalue
+# 2-TIME     Baseline, Week, Diff  
+# 3-GROUP    A, B, Diff
+dl2 <- data.frame(LAB = dl) %>% 
+   rownames_to_column(var = "VAR") %>% 
+   mutate(LAB = str_remove(LAB, "<br>"))
+
+df4s %>% 
+   select(-P_B_A, -P_B_B, -P_W_A, -P_W_B) %>%
+   arrange(VAR) %>% 
+   ungroup() %>%
+   left_join(dl2) %>% 
+   gt() %>% 
+   fmt_markdown(columns = TRUE) %>% 
+   fmt_number(columns = starts_with(c("E_","L_","U_")), decimals = 2) %>% 
+   fmt(
+      columns = starts_with("P"),
+      fns = function(x) {
+         gtsummary::style_pvalue(x, digits = 2, prepend_p = TRUE)
+      }
+   ) %>% 
+   cols_merge(
+      columns = vars(E_B_A, L_B_A, U_B_A),
+      hide_columns = vars(L_B_A, U_B_A),
+      pattern = "{1} ({2}, {3})"
+   ) %>%
+   cols_merge(
+      columns = vars(E_W_A, L_W_A, U_W_A),
+      hide_columns = vars(L_W_A, U_W_A),
+      pattern = "{1} ({2}, {3})"
+   ) %>%
+   cols_merge(
+      columns = vars(E_D_A, L_D_A, U_D_A, P_D_A),
+      hide_columns = vars(L_D_A, U_D_A, P_D_A),
+      pattern = "{1} ({2}, {3})<br>{4}"
+   ) %>%
+   tab_style(
+      style = list(
+         cell_text(weight = "bold")
+      ),
+      locations = cells_body(
+         columns = vars(E_D_A),
+         rows = P_D_A < 0.05)
+   ) %>% 
+   cols_merge(
+      columns = vars(E_B_B, L_B_B, U_B_B),
+      hide_columns = vars(L_B_B, U_B_B),
+      pattern = "{1} ({2}, {3})"
+   ) %>% 
+   cols_merge(
+      columns = vars(E_W_B, L_W_B, U_W_B),
+      hide_columns = vars(L_W_B, U_W_B),
+      pattern = "{1} ({2}, {3})"
+   ) %>% 
+   cols_merge(
+      columns = vars(E_D_B, L_D_B, U_D_B, P_D_B),
+      hide_columns = vars(L_D_B, U_D_B, P_D_B),
+      pattern = "{1} ({2}, {3})<br>{4}"
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_text(weight = "bold")
+      ),
+      locations = cells_body(
+         columns = vars(E_D_B),
+         rows = P_D_B < 0.05)
+   ) %>%
+   cols_merge(
+      columns = vars(E_D_D, L_D_D, U_D_D, P_D_D),
+      hide_columns = vars(L_D_D, U_D_D, P_D_D),
+      pattern = "{1} ({2}, {3})<br>{4}"
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_text(weight = "bold")
+      ),
+      locations = cells_body(
+         columns = vars(E_D_D),
+         rows = P_D_D < 0.05)
+   ) %>% 
+   # colors
+   tab_style(
+      style = list(
+         cell_fill(color = "#6BAED6",
+                   alpha = 0.5)
+      ),
+      locations = cells_body(
+         columns = vars(E_B_A)
+      )
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_fill(color = "#2171B5",
+                   alpha = 0.5)
+      ),
+      locations = cells_body(
+         columns = vars(E_W_A)
+      )
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_fill(color = "#08519C",
+                   alpha = 0.5)
+      ),
+      locations = cells_body(
+         columns = vars(E_D_A)
+      )
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_fill(color = "#74C476",
+                   alpha = 0.5)
+      ),
+      locations = cells_body(
+         columns = vars(E_B_B)
+      )
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_fill(color = "#238B45",
+                   alpha = 0.5)
+      ),
+      locations = cells_body(
+         columns = vars(E_W_B)
+      )
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_fill(color = "#006D2C",
+                   alpha = 0.5)
+      ),
+      locations = cells_body(
+         columns = vars(E_D_B)
+      )
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_fill(color = "#bfbfbf")
+      ),
+      locations = cells_body(
+         columns = vars(LAB, E_D_D)
+      )
+   ) %>% 
+   cols_move_to_start(columns = vars(LAB)) %>% 
+   cols_hide(columns = vars(VAR)) %>% 
+   cols_label(
+      E_B_A = "Baseline",
+      E_W_A = "Week 16",
+      E_B_B	= "Baseline",
+      E_W_B	= "Week 16",
+      E_D_A	= "Placebo",
+      E_D_B	= "Active",
+      E_D_D = "Difference"
+   ) %>% 
+   cols_width(starts_with(c("E_")) ~ px(135),
+              vars(LAB) ~ px(200)) %>%
+   cols_align("right",
+              columns = vars(LAB)) %>% 
+   tab_spanner(label = "Placebo",
+               vars(E_B_A, E_W_A)) %>% 
+   tab_spanner(label = "Active",
+               vars(E_B_B, E_W_B)) %>% 
+   tab_spanner(label = "Within TRT between VISIT",
+               vars(E_D_A, E_D_B)) %>% 
+   tab_spanner(label = "Overall",
+               vars(E_D_D)) %>% 
+   tab_options(table.font.size      = px(12),
+               data_row.padding     = px(5),
+               table_body.hlines.width = px(5),
+               table_body.hlines.color = "white") %>% 
+   opt_table_lines(extent = "default") %>% 
+   tab_header(title = html("Phase 3 Randomized Clinical Trial Mixed-Model Results evaluating 
+                           quality of life <b>DLQI Total Scale</b> & Individual Subscales"),
+              subtitle  = "Standardized Effects (95% CI) and Standardized Differences (95% CI) and p-values") %>% 
+   tab_stubhead(label = "") %>% 
+   opt_align_table_header( align = "left")
+```
+
+##### Table (Raw)
+```{r}
+df4 %>% 
+   select(-P_B_A, -P_B_B, -P_W_A, -P_W_B) %>%
+   arrange(df4s$VAR) %>% 
+   ungroup() %>%
+   left_join(dl2) %>% 
+   gt() %>% 
+   fmt_markdown(columns = TRUE) %>% 
+   fmt_number(columns = starts_with(c("E_","L_","U_")), decimals = 2) %>% 
+   fmt(
+      columns = starts_with("P"),
+      fns = function(x) {
+         gtsummary::style_pvalue(x, digits = 2, prepend_p = TRUE)
+      }
+   ) %>% 
+   cols_merge(
+      columns = vars(E_B_A, L_B_A, U_B_A),
+      hide_columns = vars(L_B_A, U_B_A),
+      pattern = "{1} ({2}, {3})"
+   ) %>%
+   cols_merge(
+      columns = vars(E_W_A, L_W_A, U_W_A),
+      hide_columns = vars(L_W_A, U_W_A),
+      pattern = "{1} ({2}, {3})"
+   ) %>%
+   cols_merge(
+      columns = vars(E_D_A, L_D_A, U_D_A, P_D_A),
+      hide_columns = vars(L_D_A, U_D_A, P_D_A),
+      pattern = "{1} ({2}, {3})<br>{4}"
+   ) %>%
+   tab_style(
+      style = list(
+         cell_text(weight = "bold")
+      ),
+      locations = cells_body(
+         columns = vars(E_D_A),
+         rows = P_D_A < 0.05)
+   ) %>% 
+   cols_merge(
+      columns = vars(E_B_B, L_B_B, U_B_B),
+      hide_columns = vars(L_B_B, U_B_B),
+      pattern = "{1} ({2}, {3})"
+   ) %>% 
+   cols_merge(
+      columns = vars(E_W_B, L_W_B, U_W_B),
+      hide_columns = vars(L_W_B, U_W_B),
+      pattern = "{1} ({2}, {3})"
+   ) %>% 
+   cols_merge(
+      columns = vars(E_D_B, L_D_B, U_D_B, P_D_B),
+      hide_columns = vars(L_D_B, U_D_B, P_D_B),
+      pattern = "{1} ({2}, {3})<br>{4}"
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_text(weight = "bold")
+      ),
+      locations = cells_body(
+         columns = vars(E_D_B),
+         rows = P_D_B < 0.05)
+   ) %>%
+   cols_merge(
+      columns = vars(E_D_D, L_D_D, U_D_D, P_D_D),
+      hide_columns = vars(L_D_D, U_D_D, P_D_D),
+      pattern = "{1} ({2}, {3})<br>{4}"
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_text(weight = "bold")
+      ),
+      locations = cells_body(
+         columns = vars(E_D_D),
+         rows = P_D_D < 0.05)
+   ) %>% 
+   # colors
+   tab_style(
+      style = list(
+         cell_fill(color = "#6BAED6",
+                   alpha = 0.5)
+      ),
+      locations = cells_body(
+         columns = vars(E_B_A)
+      )
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_fill(color = "#2171B5",
+                   alpha = 0.5)
+      ),
+      locations = cells_body(
+         columns = vars(E_W_A)
+      )
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_fill(color = "#08519C",
+                   alpha = 0.5)
+      ),
+      locations = cells_body(
+         columns = vars(E_D_A)
+      )
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_fill(color = "#74C476",
+                   alpha = 0.5)
+      ),
+      locations = cells_body(
+         columns = vars(E_B_B)
+      )
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_fill(color = "#238B45",
+                   alpha = 0.5)
+      ),
+      locations = cells_body(
+         columns = vars(E_W_B)
+      )
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_fill(color = "#006D2C",
+                   alpha = 0.5)
+      ),
+      locations = cells_body(
+         columns = vars(E_D_B)
+      )
+   ) %>% 
+   tab_style(
+      style = list(
+         cell_fill(color = "#bfbfbf")
+      ),
+      locations = cells_body(
+         columns = vars(LAB, E_D_D)
+      )
+   ) %>% 
+   cols_move_to_start(columns = vars(LAB)) %>% 
+   cols_hide(columns = vars(VAR)) %>% 
+   cols_label(
+      E_B_A = "Baseline",
+      E_W_A = "Week 16",
+      E_B_B	= "Baseline",
+      E_W_B	= "Week 16",
+      E_D_A	= "Placebo",
+      E_D_B	= "Active",
+      E_D_D = "Difference"
+   ) %>% 
+   cols_width(starts_with(c("E_")) ~ px(135),
+              vars(LAB) ~ px(200)) %>%
+   cols_align("right",
+              columns = vars(LAB)) %>% 
+   tab_spanner(label = "Placebo",
+               vars(E_B_A, E_W_A)) %>% 
+   tab_spanner(label = "Active",
+               vars(E_B_B, E_W_B)) %>% 
+   tab_spanner(label = "Within TRT between VISIT",
+               vars(E_D_A, E_D_B)) %>% 
+   tab_spanner(label = "Overall",
+               vars(E_D_D)) %>% 
+   tab_options(table.font.size      = px(12),
+               data_row.padding     = px(5),
+               table_body.hlines.width = px(5),
+               table_body.hlines.color = "white") %>% 
+   tab_header(title = html("Phase 3 Randomized Clinical Trial Mixed-Model Results evaluating 
+                           quality of life <b>DLQI Total Scale</b> & Individual Subscales"),
+              subtitle  = "Effects (95% CI) and Differences (95% CI) and p-values") %>% 
+   tab_stubhead(label = "") %>% 
+   opt_align_table_header( align = "left")
+```
