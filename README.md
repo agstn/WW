@@ -1,26 +1,9 @@
-## Wonderful Wednesdays Entries
+## Table of contents of my Wonderful Wednesdays Entries
 
-Table of contents of my Wonderful Wednesdays Entries.
-
-  - [PASI over time](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2020/2020-03-11).
-    Present on **March 11th, 2020**.
-
-  - [Survival / time to event](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2020/2020-04-08).
-    Presented on **April 7th, 2020**. 
-
-  - [Subgroup data](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2020/2020-05-13).
-    Presented on **May 14th, 2020**.
-
-  - [Haemoglobin in Anaemia](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2020/2020-06-10).
-    Presented on **June 10th, 2020**.
-
-  - [COPD](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2020/2020-07-08).
-    Presented on **July 8th, 2020**
-
-  - [Adverse events](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2020/2020-08-12).
-    Presented on **August 12th, 2020**
-    ### Tendril Plot for Adverse event example data set
-    [The Tendril Plot—a novel visual summary of the incidence, significance and temporal aspects of adverse events in clinical trials (https://academic.oup.com/jamia/article/25/8/1069/4951737)
+- ### Tendril Plot for Adverse event example data set
+    [The Tendril Plot—a novel visual summary of the incidence, significance and temporal aspects of adverse events in clinical trials](https://academic.oup.com/jamia/article/25/8/1069/4951737)
+    [Adverse events](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2020/2020-08-12).
+    Presented on **August 12th, 2020**  
 <img src="https://raw.githubusercontent.com/agstn/WW/main/2020-08-12/tendril_plot.png" width="70%" height="70%">
 
   - [Adverse events II](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2020/2020-09-09).
