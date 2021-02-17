@@ -13,8 +13,8 @@
 ### [Mediation Analysis w/ BRMS](https://rpubs.com/acalatroni/688767)
 In some situations we may want to invesitage the direct and indirect effect of treament on the outcome. With medition models we introduce a intervening varaible between the treatment and outcome
 [Mediation data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2020/2020-10-14). Presented on **October 14th, 2020**  
-![direct effect](https://raw.githubusercontent.com/agstn/WW/main/2020-10-14/_direct.png)   
-![indirect effect](https://raw.githubusercontent.com/agstn/WW/main/2020-10-14/_indirect.png) 
+<iframe src="http://rstudio-pubs-static.s3.amazonaws.com/688767_8007c7281f2341acaed4ab9953094102.htmle" width="800" height="450">
+</iframe>
 
 ### [Visualize a prediction model w/ VRPM](https://rpubs.com/acalatroni/708263)
 Visualizing Risk Prediction Models. For each predictor, a color bar represents the contribution to the linear predictor. A conversion from the linear predictor to the estimated risk is also given.
