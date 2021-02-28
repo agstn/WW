@@ -1,0 +1,289 @@
+---
+title:  "<h4> <a href='https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-02-10'> Visualization of patterns of missing data </a> by Agustin Calatroni"
+output:
+   html_document:
+      self_containded: TRUE
+      code_download: yes
+      toc: false 
+---
+
+<a href="https://github.com/agstn/WW" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#70B7FD; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+```{=html}
+<style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+```
+```{=html}
+<style type="text/css">
+.main-container {
+max-width: 1200px;
+margin-left: auto;
+margin-right: auto;}
+</style>
+```
+```{r setup, include=FALSE}
+options(width = 200)
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE, comment = NA, cache = FALSE)
+```
+
+```{r packages}
+pacman::p_load(tidyverse)
+```
+
+```{r import-data}
+d1 <- read.csv("https://raw.githubusercontent.com/VIS-SIG/Wonderful-Wednesdays/master/data/2021/2021-02-10/missing_data.csv") %>%
+  select(-contains(".bin.")) %>%
+  mutate(
+    trt = factor(trt, labels = c("A", "P")),
+    gender = factor(gender, labels = c("F", "M"))
+  ) %>%
+  rowwise() %>%
+  mutate(na_num = sum(is.na(c_across(pain.0:pain.10)))) %>%
+  mutate(group = case_when(
+    na_num > 0  & trt == "P" ~ "P/m",
+    na_num > 0  & trt == "A" ~ "A/m",
+    na_num == 0 & trt == "P" ~ "P",
+    na_num == 0 & trt == "A" ~ "A",) %>% 
+      factor(levels = c("A","A/m","P/m","P")))%>%
+  ungroup()
+
+write.csv(d1, "ch_missing_data.csv")
+```
+
+```{r long-data}
+d3 <- d1 %>%
+  rownames_to_column(var = 'id') %>%
+  pivot_longer(cols = starts_with("pain."),
+               values_to = 'pain') %>% 
+  separate(name, c("name","time"), "\\.")%>%
+  mutate(time = factor(time, levels = c(0:10))) %>% 
+  drop_na(pain)
+```
+
+```{r seriation}
+pacman::p_load(seriation)
+
+d1_na <- d1 %>%
+  mutate(across(contains("pain."), ~ is.na(.x) %>% as.numeric())) %>%
+  select(contains("pain.")) %>%
+  data.matrix()
+
+set.seed(123)
+o <- seriate(d1_na, method = "BEA", margin = 1, control = list(rep = 100, istart = 1, jstart = 1))
+```
+
+```{r data-reorder}
+d2 <- d1 %>%
+  slice(get_order(o))
+```
+
+```{r patterns-missing, include=FALSE}
+pacman::p_load(samon)
+
+# 1. t the time-point
+# 2. Number On Study 
+# 3. Number Observed 
+# 4. Number last seen at time t
+# 5. Proportion last seen (of number on-study) 
+# 6. Proportion last seen (of number observed) 
+# 7. Number intermittent missing data 
+# 8. proportion intermittent missing (of number on-study)
+
+# TRT:A
+samonTabmat1(d2 %>% filter(trt == "A") %>% select(contains("pain."))) %>%
+  samonTable1()
+# Check
+p1_a <- samonDataCheck(d2 %>% filter(trt == "A") %>% select(contains("pain.")) %>% as.data.frame())
+p2_a <-   samonTabmat1(d2 %>% filter(trt == "A") %>% select(contains("pain.")))
+p3_a <- data.frame(time = 0:10,
+                   miss = 150 - p2_a[,3],
+                   mon  = c(sum(p1_a$missingPatterns == '___________'),
+                            sum(p1_a$missingPatterns == '*__________'),
+                            sum(p1_a$missingPatterns == '**_________'),
+                            sum(p1_a$missingPatterns == '***________'),
+                            sum(p1_a$missingPatterns == '****_______'),
+                            sum(p1_a$missingPatterns == '*****______'),
+                            sum(p1_a$missingPatterns == '******_____'),
+                            sum(p1_a$missingPatterns == '*******____'),
+                            sum(p1_a$missingPatterns == '********___'),
+                            sum(p1_a$missingPatterns == '*********__'),
+                            sum(p1_a$missingPatterns == '**********_')),
+                   int = p2_a[,7])
+
+# TRT:P
+samonTabmat1(d2 %>% filter(trt == "P") %>% select(contains("pain."))) %>%
+  samonTable1()
+# Check
+p1_p <- samonDataCheck(d2 %>% filter(trt == "P") %>% select(contains("pain.")) %>% as.data.frame())
+p2_p <-   samonTabmat1(d2 %>% filter(trt == "P") %>% select(contains("pain.")))
+p3_p <- data.frame(time = 0:10,
+                   miss = 150 - p2_p[,3],
+                   mon  = c(sum(p1_p$missingPatterns == '___________'),
+                            sum(p1_p$missingPatterns == '*__________'),
+                            sum(p1_p$missingPatterns == '**_________'),
+                            sum(p1_p$missingPatterns == '***________'),
+                            sum(p1_p$missingPatterns == '****_______'),
+                            sum(p1_p$missingPatterns == '*****______'),
+                            sum(p1_p$missingPatterns == '******_____'),
+                            sum(p1_p$missingPatterns == '*******____'),
+                            sum(p1_p$missingPatterns == '********___'),
+                            sum(p1_p$missingPatterns == '*********__'),
+                            sum(p1_p$missingPatterns == '**********_')),
+                   int = p2_p[,7])
+```
+
+```{r heatmap-create}
+pacman::p_load(ComplexHeatmap)
+pacman::p_load(circlize)
+
+t_column_ha <- HeatmapAnnotation(
+  bar1 = anno_barplot(cbind(p3_a['miss'], p3_p['miss']),
+                      height = unit(2, "cm"),
+                      ylim = c(0, 100),
+                      axis_param = list(at=c(25, 50, 100)),
+                      gp = gpar(fill = c("#A6CEE3","#B2DF8A"), 
+                                col  = c("#A6CEE3","#B2DF8A"))),
+  bar2 = anno_barplot(cbind(p3_a['mon'], p3_p['mon']),
+                      height = unit(2, "cm"),
+                      ylim = c(0,10),
+                      gp = gpar(fill = c("#A6CEE3","#B2DF8A"), 
+                                col  = c("#A6CEE3","#B2DF8A"))),
+  annotation_label = c("Missing\nOverall","Monotone"),
+  gap = unit(3, "points")
+)
+
+b_column_ha <- HeatmapAnnotation(
+  foo1 =  d3 %>% 
+    group_by(time, group) %>% 
+    summarise(m = mean(pain)) %>% 
+    ungroup() %>% 
+    pivot_wider(names_from  = group,
+                values_from = m) %>%  
+    select(-time) %>%  
+    anno_lines(
+      add_points = TRUE,
+      gp    = gpar(col = c("#1F78B4","#A6CEE3","#B2DF8A","#33A02C")),
+      pt_gp = gpar(col = c("#1F78B4","#A6CEE3","#B2DF8A","#33A02C"))
+    ),
+  annotation_name_side = "left",
+  annotation_label = c("Mean")
+)
+
+col_fun <- circlize::colorRamp2(breaks = c(0, 16, 24, 32, 64), 
+                                colors = RColorBrewer::brewer.pal(n = 9, name = "PuOr")[c(1,3,5,7,9)],
+                                transparency = 0)
+
+ha_list <- Heatmap(d2 %>%
+                     select(contains("pain")) %>%
+                     data.matrix(),
+                   heatmap_legend_param = list(title = 'Pain',
+                                               at = c(0, 15, 24, 32, 64),
+                                               labels = c("0-Min", "15-Q1", "24-Q2/M",  "32-Q3", "64-Max")),
+                   col = col_fun,
+                   na_col = "gray25",
+                   column_labels = 0:10,
+                   column_names_rot = 0,
+                   column_gap = unit(2, "mm"),
+                   cluster_columns = FALSE,
+                   cluster_rows = FALSE,
+                   cluster_row_slices = FALSE,
+                   row_split = d2$group,
+                   row_title = ' ',
+                   row_title_gp = gpar(cex = 0.2),
+                   top_annotation    = t_column_ha,
+                   bottom_annotation = b_column_ha
+) +
+  Heatmap(d2 %>% pull(group),
+          name = "TRT",
+          col = c("#1F78B4","#A6CEE3","#B2DF8A","#33A02C"),
+          show_heatmap_legend = FALSE,
+          heatmap_legend_param  = list(title = "TRT",
+                                       labels = c("Active","A w/Miss", "P w/Miss","Placebo")),
+          bottom_annotation = HeatmapAnnotation(ggplot = anno_empty(border = FALSE,
+                                                                    height = unit(3, "cm")))
+  ) +
+  Heatmap(d2 %>% pull(bmi),
+          name = "BMI",
+          col = circlize::colorRamp2(breaks = c(18, 25, 27, 30, 35), 
+                                     colors = RColorBrewer::brewer.pal(n = 9, name = "YlOrRd")[c(1,3,5,7,9)],
+                                     transparency = 0),
+          heatmap_legend_param = list(title = "\nBMI (kg/m2)",
+                                      at = c(18, 25, 27, 30, 35),
+                                      labels = c("18-Min", "25-Q1", "27-Q2",  "30-Q3", "35-Max")),
+          bottom_annotation = HeatmapAnnotation(summary = anno_summary(gp = gpar(fill = c("#1F78B4","#A6CEE3","#B2DF8A","#33A02C"))))
+  ) +
+  Heatmap(d2 %>% pull(age),
+          name = "Age",
+          col = circlize::colorRamp2(breaks = c(19, 37, 49, 62, 88), 
+                                     colors = RColorBrewer::brewer.pal(n = 9, name = "YlOrRd")[c(1,3,5,7,9)],
+                                     transparency = 0),
+          heatmap_legend_param = list(title = "\nAge (yr)",
+                                      at = c(19, 37, 49, 62, 88),
+                                      labels = c("19-Min", "37-Q1", "49-Q2",  "620-Q3", "88-Max")),
+          bottom_annotation = HeatmapAnnotation(summary = anno_summary(gp = gpar(fill = c("#1F78B4","#A6CEE3","#B2DF8A","#33A02C"))))
+  )+
+  Heatmap(d2 %>% pull(gender),
+          name = "Gender",
+          col = c("#FFCCFF","#CCFFFF"),
+          show_heatmap_legend = FALSE,
+          heatmap_legend_param  = list(title = "Gender",
+                                       at = c("F","M"),
+                                       labels = c("Female","Male")),
+          bottom_annotation = HeatmapAnnotation(summary = anno_summary(
+            border = FALSE,
+            axis_param = list(side = 'right',
+                              at = c(0, 0.25, 0.5, 0.75, 1),
+                              labels = c('0','Female','.5','Male','1'))))
+  ) 
+```
+
+<style>
+div.gray {background-color:#f2f2f2; border-radius: 5px; padding: 5px; margin-right: 350px;}
+</style>
+<div class = "gray">
+**Phase III clinical trial on *Psoriasis* comparing Active Treatment vs Placebo for outcome variable Pain** (collected on a visual analog scale [0-100]). The pain outcome variable was reordered and classified into four distinctive groups: Active Treatment without [   ]{style="background-color: #1F78B4"} with [   ]{style="background-color: #A6CEE3"} any missing data and Placebo without [   ]{style="background-color: #33A02C"} with [   ]{style="background-color: #B2DF8A"} any missing data. The longitudinal pain scores are visualized through a color-coded Heatmap where missing values are coded [   ]{style="background-color: #7f7f7f"}. Vertical and horizontal figures were added to adorn different aspects of the missing data. Vertical top annotations display the *overall* and *monotone* missing data patterns, while bottom annotations display the longitudinal *mean* results for each of the aforementioned groups. Right horizontal figures represent the distribution of covariates extended by the bottom summary display.
+</div>
+<br>
+```{r heatmap-draw, fig.width = 14, fig.height = 9, dpi = 600}
+draw(ha_list,
+     heatmap_legend_side = 'right',
+     gap = unit(c(2,6,6,5), 'mm'))
+
+decorate_annotation("ggplot", {
+  vp <- current.viewport()$name
+  print(
+    ggplot(
+      data = d2,
+      aes(group, fill = group)) +
+      geom_bar() +
+      geom_text(stat='count', aes(label=..count..), vjust=1.2, size = 2.5) +
+      scale_fill_manual(values = c("#1F78B4","#A6CEE3","#B2DF8A","#33A02C")) +
+      labs(y = NULL)+
+      theme_void() +
+      theme(legend.position = "none"),
+    vp = vp
+  )
+})
+
+decorate_heatmap_body("TRT", {grid.text("Active")},          row_slice = 1)
+decorate_heatmap_body("TRT", {grid.text("Active\nw/ Miss")}, row_slice = 2)
+decorate_heatmap_body("TRT", {grid.text("Placebo\nw/ Miss")},row_slice = 3)
+decorate_heatmap_body("TRT", {grid.text("Placebo")},         row_slice = 4)
+```
+
+```{r}
+sessioninfo::session_info()%>%
+  details::details(
+    summary = 'Current session info',
+    open    = FALSE
+  )
+```
+
+#### Links
+
+[ComplexHeatmap](https://jokergoo.github.io/ComplexHeatmap-reference/book/ "https://jokergoo.github.io/ComplexHeatmap-reference/book/complexheatmap-cover.jpg")
+
+[Package Reference](https://jokergoo.github.io/ComplexHeatmap/index.html "http://jokergoo.github.io/complexheatmap_logo.svg")
+
+[seriation: Infrastructure for Ordering Objects Using Seriation](https://cran.r-project.org/web/packages/seriation/index.html)
+
+[samon: Sensitivity Analysis for Missing Data](https://cran.r-project.org/web/packages/samon/index.html)
