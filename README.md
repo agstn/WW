@@ -29,5 +29,9 @@ Visualizing Risk Prediction Models. For each predictor, a color bar represents t
 <img src="https://raw.githubusercontent.com/agstn/WW/main/2021-01-13/dlqi_mixed.png" width="85%" height="85%"> 
 
 ### [Visualization of patterns of missing data](https://rpubs.com/acalatroni/731967)  
-[Missing data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-02-10). Presented on **February 2nd, 2021**  
+[Missing data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-02-10). Presented on **February 10nd, 2021**  
 <img src="https://raw.githubusercontent.com/agstn/WW/main/2021-02-10/ch_missing_data.png" width="85%" height="85%">
+
+## [Visualization of patterns of response data](https://rpubs.com/acalatroni/747076)
+[Mobile app data](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-03-10). Presented on **March 10th, 2021**
+<img src="https://raw.githubusercontent.com/agstn/WW/main/2021-03-10/h_lineup.png" width="85%" height="85%">
