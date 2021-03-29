@@ -1,0 +1,79 @@
+---
+title:  "<h4> <a href='https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-02-10'> Visualization of patterns of response data </a> by Agustin Calatroni"
+output:
+ html_document:
+ self_containded: TRUE
+ code_download: yes
+ toc: false
+---
+
+<style type="text/css">
+.main-container {
+max-width: 1800px;
+margin-left: auto;
+margin-right: auto;
+padding: 0; 
+margin: 2px;}
+</style>
+
+```{r setup, include=FALSE}
+options(width = 200)
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE, comment = NA, cache = FALSE)
+```
+
+```{r packages}
+pacman::p_load(tidyverse, rio)
+library(lineupjs)
+```
+
+```{r import-data}
+d_1rec <- import("C:/R/Wonderful-Wednesdays/2021-03-10/d_1rec.rds") 
+```
+
+```{r lineup}
+lineup(d_1rec,
+       height = "950px",
+       width = "1750px",
+       options = list(rowHeight = 25,
+                      labelRotation = 45),
+       ranking = lineupRanking(columns = c('_aggregate','AppID','activated','site','sev', 'sex', 'smoke','age','dx_copd','Video'),
+                               Video = list(type = 'weightedSum', 
+                                            columns = c("prV", "generalV", "inhalerV", "mindV", "smokeV"),
+                                            weights = c(0.2, 0.2, 0.2, 0.2, 0.2),
+                                            label = "Video"),
+                               sortBy = "Video:desc"),
+       ranking1 = lineupRanking(columns = c("cat_3","cat_2"),
+                                sortBy = "cat_3:desc")
+)
+```
+
+```{r}
+sessioninfo::session_info()%>%
+        details::details(
+                summary = 'Current session info',
+                open    = FALSE
+        )
+```
+
+```{=html}
+<h3>Video</h3>
+<h3>LineUp InfoVis Demonstration Video</h3>
+<iframe width="600" height="300" src="https://www.youtube.com/embed/iFqCBI4T8ks" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+<h3>Publications</h3>
+<h3>LineUp: Visual Analysis of Multi-Attribute Rankings
+<a href="http://data.caleydo.org/papers/2013_infovis_lineup.pdf">Paper</a> 
+<a href="http://caleydo.org/publications/2013_infovis_lineup/">Paper Website</a></h3>
+
+<p>Samuel Gratzl, Alexander Lex, Nils Gehlenborg, Hanspeter Pfister, and Marc Streit <br>
+IEEE Transactions on Visualization and Computer Graphics (InfoVis '13), 19(12), pp. 2277-2286, 
+<a href="https://dx.doi.org/10.1109/TVCG.2013.173">doi:10.1109/TVCG.2013.173</a>, 2013.</p>
+```
+
+#### Links
+- Github: <https://github.com/lineupjs/lineup_htmlwidget>  
+- Help: <https://rdrr.io/github/lineupjs/lineup_htmlwidget/>  
+- Website: <https://lineup.js.org/>  
+- Apps: <https://lineup.js.org/app/>  
+- App Github <https://github.com/lineupjs/lineup_app>  
+

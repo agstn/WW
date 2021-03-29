@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Impact of myCOPD</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+    <!-- <link rel="stylesheet" type="text/css" href="/css/result-light.css"> -->
+
+      <link rel="stylesheet" type="text/css" href="https://unpkg.com/lineupjs@4.0.0/build/LineUpJS.css">
+      <script type="text/javascript" src="https://unpkg.com/lineupjs@4.0.0/build/LineUpJS.js"></script>
+      <script type="text/javascript" src="https://unpkg.com/papaparse"></script>
+
+  <style id="compiled-css" type="text/css">
+      .lu {
+  clear: both;
+  position: absolute;
+  top: 1px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0;
+}
+
+    /* EOS */
+  </style>
+
+  <script id="insert"></script>
+
+</head>
+<body>
+    <script id="data" type="text/csv">
+AppID,activated,site,sev,sex,age,dx_copd,smoke,generalV,prV,inhalerV,mindV,smokeV,cat_B,cat_1,cat_2,cat_3,symp_B,symp_1,symp_2,symp_3
+ID-18,Y,C,Mild,M,70,11.15,Ex-Smoker,18,87,2,1,0,0,0,-2.83,-1,,,,
+ID-16,Y,B,Moderate,F,56,9.18,Current,20,4,1,2,0,0,0,4.43,6.42,0,1.21,1.77,1.38
+ID-6,Y,B,Moderate,M,58,7.02,Current,4,1,2,0,1,0,0,0,3.67,,,,
+ID-3,Y,C,Moderate,M,74,1.24,Ex-Smoker,10,25,3,0,0,0,0,0.53,1.79,,,,
+ID-10,Y,C,Moderate,M,79,14.38,Ex-Smoker,3,27,1,0,0,0,0,-4.5,-4.5,,,,
+ID-4,Y,C,Mild,F,60,5.39,Ex-Smoker,2,1,2,0,0,0,0,0,0,0,-0.57,-0.77,-0.69
+ID-20,Y,C,Moderate,F,61,5.46,Current,6,1,1,0,0,0,0,-4.25,-6.5,,,,
+ID-5,Y,B,Moderate,F,68,14.11,Ex-Smoker,3,38,0,0,0,0,0,-2.5,-2.5,,,,
+ID-19,Y,B,Mild,M,64,4.04,Ex-Smoker,4,1,1,0,0,0,0,-3.5,-3.5,0,0,0,0
+ID-13,Y,B,Mild,M,59,7.87,Current,4,1,1,0,0,,,,,0,0.1,0.52,0
+ID-2,Y,A,Moderate,F,68,0.06,Ex-Smoker,3,2,1,0,0,,,,,,,,
+ID-11,Y,B,Moderate,F,57,5.91,Ex-Smoker,2,1,1,0,0,,,,,0,0.11,0.43,
+ID-8,Y,B,Moderate,F,74,2.39,Ex-Smoker,1,4,1,0,0,0,0,3.36,0.77,0,-1.82,-1.17,-2
+ID-14,Y,A,Moderate,F,67,0.04,Current,1,3,1,0,0,0,0,0,0,,,,
+ID-15,Y,C,Moderate,F,55,7.48,Current,1,0,1,0,0,0,0,0,0,,,,
+ID-1,Y,B,Mild,M,75,8.97,Ex-Smoker,3,12,0,0,0,0,0,0,0,0,0,0,0
+ID-12,Y,C,Moderate,F,52,1.05,Ex-Smoker,1,15,0,0,0,0,0,2,2,,,,
+ID-7,Y,A,Mild,M,69,6.24,Ex-Smoker,2,0,0,0,0,,,,,,,,
+ID-9,Y,A,Moderate,F,66,18.25,Ex-Smoker,1,0,0,0,0,,,,,,,,
+ID-17,Y,C,Moderate,F,72,5.15,Ex-Smoker,1,0,0,0,0,,,,,,,,
+ID-21,Y,C,Moderate,M,69,1.74,Ex-Smoker,0,0,0,0,0,,,,,,,,
+ID-35,N,B,Mild,F,65,18.02,Ex-Smoker,0,0,0,0,0,,,,,,,,
+ID-36,N,A,Moderate,M,65,10.9,Ex-Smoker,0,0,0,0,0,,,,,,,,
+ID-37,N,B,Moderate,F,69,2.19,Ex-Smoker,0,0,0,0,0,,,,,,,,
+ID-45,N,B,Moderate,F,53,4.32,Current,0,0,0,0,0,,,,,,,,
+ID-46,N,B,Moderate,F,65,8.87,Ex-Smoker,0,0,0,0,0,,,,,,,,
+ID-47,N,B,Moderate,F,75,33.16,Ex-Smoker,0,0,0,0,0,,,,,,,,
+ID-50,N,B,Moderate,F,71,7.04,Ex-Smoker,0,0,0,0,0,,,,,,,,
+ID-57,N,A,Moderate,M,74,6.5,Ex-Smoker,0,0,0,0,0,,,,,,,,
+</script>
+
+<script id="dump" type="application/json">{
+ "$schema": "https://lineup.js.org/develop/schema.4.0.0.json",
+ "uid": [32],
+ "selection": [],
+ "aggregations": {},
+ "rankings": [
+  {
+   "columns": [
+    {
+     "id": "col0",
+     "desc": {
+      "type": "aggregate",
+      "label": "Aggregate Groups",
+      "fixed": true,
+      "width": 40
+     },
+     "width": 40
+    },
+    {
+     "id": "col2",
+     "desc": "string@AppID",
+     "summary": "Participant ID",
+     "label": "ID",
+     "width": 80,
+     "loaded": true,
+     "filter": null,
+     "groupCriteria": {
+      "type": "startsWith",
+      "values": []
+     }
+    },
+    {
+     "id": "col3",
+     "desc": "categorical@activated",
+     "summary": "User Activated?",
+     "width": 80,
+     "loaded": true,
+     "filter": null,
+     "colorMapping": null
+    },
+    {
+     "id": "col4",
+     "desc": "categorical@site",
+     "width": 80,
+     "loaded": true,
+     "filter": null,
+     "colorMapping": null
+    },
+    {
+     "id": "col5",
+     "desc": "categorical@sev",
+     "summary": "COPD Severity",
+     "width": 80,
+     "loaded": true,
+     "filter": null,
+     "colorMapping": null
+    },
+    {
+     "id": "col6",
+     "desc": "categorical@sex",
+     "width": 80,
+     "loaded": true,
+     "filter": null,
+     "colorMapping": null
+    },
+        {
+     "id": "col7",
+     "desc": "categorical@smoke",
+     "summary": "Smoking Status",
+     "width": 80,
+     "loaded": true,
+     "filter": null,
+     "colorMapping": null
+    },
+    {
+     "id": "col8",
+     "desc": "number@age",
+     "summary": "Age",
+     "width": 100,
+     "groupRenderer": "boxplot",
+     "summaryRenderer": "histogram",
+     "loaded": true,
+     "map": {
+      "type": "linear",
+      "domain": [
+       52,
+       79
+      ],
+      "range": [
+       0,
+       1
+      ]
+     },
+     "colorMapping": "#7f7f7f",
+     "filter": null,
+     "groupSortMethod": "median",
+     "stratifyThreshholds": []
+    },
+    {
+     "id": "col9",
+     "desc": "number@dx_copd",
+     "width": 100,
+     "label": "COPD y",
+     "summary": "Years since COPD Diagnosis",
+     "groupRenderer": "boxplot",
+     "summaryRenderer": "histogram",
+     "loaded": true,
+     "map": {
+      "type": "linear",
+      "domain": [
+       0.035592061,
+       33.158112
+      ],
+      "range": [
+       0,
+       1
+      ]
+     },
+     "colorMapping": "#7f7f7f",
+     "filter": null,
+     "groupSortMethod": "median",
+     "stratifyThreshholds": []
+    },
+    {
+     "id": "col23",
+     "desc": {
+      "type": "stack",
+      "label": "Weighted Sum",
+      "renderer": "stack",
+      "groupRenderer": "stack",
+      "summaryRenderer": "default"
+     },
+     "width": 400,
+     "label": "Total Video Use",
+     "summary": "# Daily Usage",
+     "summaryRenderer": "default",
+     "children": [
+      {
+       "id": "col11",
+       "desc": "number@prV",
+       "label": "pr",
+       "summary": "Pulmonary Video",
+       "width": 80,
+       "groupRenderer": "boxplot",
+       "summaryRenderer": "histogram",
+       "loaded": true,
+       "map": {
+        "type": "linear",
+        "domain": [
+         0,
+         87
+        ],
+        "range": [
+         0,
+         1
+        ]
+       },
+       "colorMapping": "#d62728",
+       "filter": null,
+       "groupSortMethod": "median",
+       "stratifyThreshholds": []
+      },
+      {
+       "id": "col10",
+       "desc": "number@generalV",
+       "label": "general",
+       "summary": "Education Video",
+       "width": 80,
+       "groupRenderer": "boxplot",
+       "summaryRenderer": "histogram",
+       "loaded": true,
+       "map": {
+        "type": "linear",
+        "domain": [
+         0,
+         20
+        ],
+        "range": [
+         0,
+         1
+        ]
+       },
+       "colorMapping": "#2ca02c",
+       "filter": null,
+       "groupSortMethod": "median",
+       "stratifyThreshholds": []
+      },
+      {
+       "id": "col12",
+       "desc": "number@inhalerV",
+       "label": "inhaler",
+       "summary": "Use Inhaler Video",
+       "width": 80,
+       "groupRenderer": "boxplot",
+       "summaryRenderer": "histogram",
+       "loaded": true,
+       "map": {
+        "type": "linear",
+        "domain": [
+         0,
+         3
+        ],
+        "range": [
+         0,
+         1
+        ]
+       },
+       "colorMapping": "#9467bd",
+       "filter": null,
+       "groupSortMethod": "median",
+       "stratifyThreshholds": []
+      },
+      {
+       "id": "col13",
+       "desc": "number@mindV",
+       "label": "mind",
+       "summary": "Mindfulness Video",
+       "width": 80,
+       "groupRenderer": "boxplot",
+       "summaryRenderer": "histogram",
+       "loaded": true,
+       "map": {
+        "type": "linear",
+        "domain": [
+         0,
+         2
+        ],
+        "range": [
+         0,
+         1
+        ]
+       },
+       "colorMapping": "#8c564b",
+       "filter": null,
+       "groupSortMethod": "median",
+       "stratifyThreshholds": []
+      },
+      {
+       "id": "col14",
+       "desc": "number@smokeV",
+       "label": "smoke",
+       "summary": "Smoking Cessation Video",
+       "width": 80,
+       "groupRenderer": "boxplot",
+       "summaryRenderer": "histogram",
+       "loaded": true,
+       "map": {
+        "type": "linear",
+        "domain": [
+         0,
+         1
+        ],
+        "range": [
+         0,
+         1
+        ]
+       },
+       "colorMapping": "#e377c2",
+       "filter": null,
+       "groupSortMethod": "median",
+       "stratifyThreshholds": []
+      }
+     ],
+     "collapsed": false
+    }
+   ],
+   "sortCriteria": [
+    {
+     "asc": false,
+     "sortBy": "col23"
+    }
+   ],
+   "groupSortCriteria": [],
+   "groupColumns": []
+  },
+  {
+   "columns": [
+    {
+     "id": "col25",
+     "desc": {
+      "type": "aggregate",
+      "label": "Aggregate Groups",
+      "fixed": true,
+      "width": 40
+     },
+     "width": 40
+    },
+    {
+     "id": "col29",
+     "desc": "number@cat_3",
+     "width": 100,
+     "label": "CAT+3m",
+     "sumamry": "3m = End of Study",
+     "groupRenderer": "boxplot",
+     "summaryRenderer": "histogram",
+     "loaded": true,
+     "map": {
+      "type": "linear",
+      "domain": [
+       -6.5,
+       6.41666666666666
+      ],
+      "range": [
+       0,
+       1
+      ]
+     },
+     "colorMapping": {
+      "type": "quantized",
+      "base": "interpolateRdBu",
+      "steps": 6
+     },
+     "filter": null,
+     "groupSortMethod": "median"
+    },
+    {
+     "id": "col28",
+     "desc": "number@cat_2",
+     "width": 100,
+     "label": "CAT+2m",
+     "groupRenderer": "boxplot",
+     "summaryRenderer": "histogram",
+     "loaded": true,
+     "map": {
+      "type": "linear",
+      "domain": [
+       -4.5,
+       4.42948717948718
+      ],
+      "range": [
+       0,
+       1
+      ]
+     },
+     "colorMapping": {
+      "type": "quantized",
+      "base": "interpolateRdBu",
+      "steps": 6
+     },
+     "filter": null,
+     "groupSortMethod": "median"
+    }
+   ],
+   "sortCriteria": [
+    {
+     "asc": false,
+     "sortBy": "col29"
+    }
+   ],
+   "groupSortCriteria": [],
+   "groupColumns": []
+  }
+ ],
+ "showTopN": 10
+}</script>
+
+    <script type="text/javascript">//<![CDATA[
+
+const parsed = Papa.parse(document.querySelector('#data').textContent, {
+  dynamicTyping: true,
+  header: true,
+  skipEmptyLines: true
+});
+
+const dump = JSON.parse(document.querySelector('#dump').textContent);
+
+const lineup = LineUpJS
+  .builder(parsed.data).sidePanel(true, true).rowHeight(25)
+  .deriveColumns(parsed.meta.fields)
+  .deriveColors()
+  .restore(dump)
+  .build(document.body);
+
+  //]]></script>
+
+  <script>
+    // tell the embed parent frame the height of the content
+    if (window.parent && window.parent.parent){
+      window.parent.parent.postMessage(["resultsFrame", {
+        height: document.body.getBoundingClientRect().height,
+        slug: "6hfsx7oz"
+      }], "*")
+    }
+
+    // always overwrite window.name, in case users try to set it manually
+    window.name = "result"
+  </script>
+
+<h3>Video</h3>
+<h3>LineUp InfoVis Demonstration Video</h3>
+<iframe width="600" height="300" src="https://www.youtube.com/embed/iFqCBI4T8ks" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+<h3>Publications</h3>
+<h3>LineUp: Visual Analysis of Multi-Attribute Rankings
+<a href="http://data.caleydo.org/papers/2013_infovis_lineup.pdf">Paper</a> 
+<a href="http://caleydo.org/publications/2013_infovis_lineup/">Paper Website</a></h3>
+
+<p>Samuel Gratzl, Alexander Lex, Nils Gehlenborg, Hanspeter Pfister, and Marc Streit <br>
+IEEE Transactions on Visualization and Computer Graphics (InfoVis '13), 19(12), pp. 2277-2286, 
+<a href="https://dx.doi.org/10.1109/TVCG.2013.173">doi:10.1109/TVCG.2013.173</a>, 2013.</p>
+
+</body>
+</html>
