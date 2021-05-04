@@ -1,0 +1,322 @@
+---
+title:  "<h4> <a href='https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-04-14'> Sustained Response Analysis </a> using Trajectory Clustering by Agustin Calatroni"
+output:
+   html_document:
+      self_containded: TRUE
+      code_download: yes
+      toc: false 
+---
+
+<a href="https://github.com/agstn/WW" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#70B7FD; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+```{=html}
+<style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+```
+
+```{r setup, include=FALSE}
+options(width = 200)
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE, comment = NA, cache = FALSE)
+```
+
+```{r load-packages}
+# https://rpubs.com/acalatroni/764773
+pacman::p_load(tidyverse)
+pacman::p_load(ggtext)
+# devtools::install_github("hrbrmstr/waffle")
+library(waffle)
+# pacman::p_load(gtsummary)
+# http://www.danieldsjoberg.com/gtsummary-weill-cornell-presentation/#1
+```
+
+```{r import-data}
+d1_w <- read.csv("https://raw.githubusercontent.com/VIS-SIG/Wonderful-Wednesdays/master/data/2021/2021-04-14/WWW_SustainedResponse.csv") %>% 
+   mutate(ID = parse_number(USUBJID),
+          TRTC = factor(TRT, labels = c("D1","D2","C"))) 
+
+write.csv(d1_w, "WWW_SustainedResponse.csv")
+
+d1_l <- d1_w %>% 
+   pivot_longer(cols = c(BASELINE, WEEK01, WEEK04, WEEK08, WEEK16, WEEK24, WEEK32, WEEK40, WEEK52),
+                names_to = "TIMEC",
+                values_to = "PASI") %>% 
+   select(ID, TRTC, TIMEC, PASI) %>% 
+   mutate(TIMEN = ifelse(TIMEC == "BASELINE", 0, parse_number(TIMEC))) %>% 
+   group_by(ID) %>% 
+   mutate(PASI_CHG  =  PASI - PASI[TIMEC == "BASELINE"],
+          PASI_PCHG = 100*(PASI - PASI[TIMEC == "BASELINE"]) / PASI[TIMEC == "BASELINE"]) %>% 
+   ungroup()
+```
+
+```{r impute-data, include=FALSE}
+pacman::p_load(mice)
+d1_imp  <- mice(d1_w %>% select(-USUBJID, -TRT, -ID), m = 1, maxiter = 500, method = 'pmm', seed = 123)
+d1_comp <- bind_cols( d1_w %>% select(ID),
+                      complete(d1_imp))
+```
+
+```{r long-data}
+d1_l_imp <- d1_comp %>% 
+   pivot_longer(cols = c(BASELINE, WEEK01, WEEK04, WEEK08, WEEK16, WEEK24, WEEK32, WEEK40, WEEK52),
+                names_to = "TIMEC",
+                values_to = "PASI") %>% 
+   select(ID, TRTC, TIMEC, PASI) %>% 
+   mutate(TIMEN = ifelse(TIMEC == "BASELINE", 0, parse_number(TIMEC))) %>% 
+   group_by(ID) %>% 
+   mutate(PASI_CHG  =  PASI - PASI[TIMEN == 0],
+          PASI_PCHG = 100*(PASI - PASI[TIMEN == 0]) / PASI[TIMEN == 0]) %>% 
+   ungroup()
+```
+
+```{r kml-clusters}
+pacman::p_load(latrend)
+
+kmlMethod  <- lcMethodKML(response = "PASI_PCHG", id = "ID", time = "TIMEN", nbRedrawing = 25)
+kmlMethods <- lcMethods(kmlMethod, nClusters = 1:5)
+kmlModels  <- latrendBatch(kmlMethods, data = d1_l_imp, verbose = FALSE)
+kmlModel5  <- subset(kmlModels, nClusters == 5, drop = TRUE)
+clusterNames(kmlModel5) <- c('T2','T3','T1','T4','T5')
+```
+
+```{r derive-data}
+t_p <- data.frame(TRAJ   = clusterNames(kmlModel5),
+                  P      = gtsummary::style_percent(
+                     clusterProportions(kmlModel5) %>% as.vector(), 
+                     symbol  = TRUE, digits = 1)) %>% 
+   mutate(TRAJ = TRAJ %>% 
+             fct_relevel('T1', 'T2', 'T3', 'T4', 'T5') ) %>% 
+   mutate(TRAJ_P = str_glue("{TRAJ} ({P})") %>% 
+             fct_relevel('T1', 'T2', 'T3', 'T4', 'T5')) %>% 
+   select(-P)
+
+d_per <- data.frame(ID   = ids(kmlModel5),
+                    TRTC = d1_w$TRTC,
+                    TRAJ = trajectoryAssignments(kmlModel5)) %>% 
+   mutate(TRAJ = TRAJ %>% fct_relevel('T1','T2','T3','T4','T5')) %>%
+   left_join(t_p) %>% 
+   bind_cols(postprob(kmlModel5) %>% 
+                data.frame())
+
+d_vis <- d1_l %>% 
+   left_join(d_per %>% select(ID, TRAJ, TRAJ_P))
+
+d_traj <- clusterTrajectories(kmlModel5, at = seq(0,52)) %>% 
+   as.data.frame() %>% 
+   rename(TRAJ = Cluster) %>% 
+   mutate(TRAJ = TRAJ %>% fct_relevel('T1','T2','T3','T4','T5')) %>% 
+   left_join(t_p)
+```
+
+
+```{r create-figures}
+f0 <- ggplot(data = d_vis,
+             aes(x = TIMEN, y = PASI_PCHG, group = factor(ID))) +
+   geom_line(alpha = 0.20) +
+   scale_x_continuous("Week",
+                      breaks = c(0, 1, 4, 8, 16, 24, 32, 40, 52),
+                      labels = c("B  ","1","4","8","16","24","32","40","52")) +
+   scale_y_continuous("PASI Percent Change",
+                      limits = c(-100, 25),
+                      breaks = c( 25,    0,    -25,   -50,    -75,    -90,    -100),
+                      labels = c('25%', '0%', '-25%', '50%', '-75%', '-90%', '-100%'),
+                      sec.axis = dup_axis(name = "")
+   ) +
+   theme_minimal() +
+   theme(panel.grid.minor = element_blank(),
+         plot.margin = margin(0,0,0,0, 'pt'))
+
+f1 <- ggplot(data = d_vis,
+             aes(x = TIMEN, y = PASI_PCHG, group = factor(ID))) +
+   geom_line(alpha = 0.20) +
+   scale_x_continuous(name = NULL,
+                      breaks = c(0, 1, 4, 8, 16, 24, 32, 40, 52),
+                      labels = c("B  "," 1","4","8","16","24","32","40","52")) +
+   scale_y_continuous("PASI Percent Change",
+                      limits = c(-100, 25),
+                      breaks = c( 25,    0,    -25,   -50,    -75,    -90,    -100),
+                      labels = c('25%', '0%', '-25%', '50%', '-75%', '-90%', '-100%'),
+                      sec.axis = dup_axis(name = "")) +
+   guides(color = FALSE) +
+   facet_wrap(~ TRAJ_P, nrow = 1) +
+   theme_minimal() +
+   theme(panel.grid.minor = element_blank(),
+         plot.margin = margin(0,0,0,0, 'pt')) +
+   theme(
+      strip.background = element_blank(),
+      strip.text = element_textbox(
+         size = 12,
+         color = "black", fill = "gray85", box.color = "gray85",
+         halign = 0.5, linetype = 1, r = unit(5, "pt"), width = unit(1, "npc"),
+         padding = margin(3, 0, 3, 0), margin = margin(3, 3, 3, 3)
+      )
+   )
+
+f2 <- ggplot(data = d_traj,
+             aes(x = TIMEN, y = PASI_PCHG, group = TRAJ_P, color = TRAJ_P)) +
+   geom_line(lwd = 1.5) +
+   scale_x_continuous(name = NULL,
+                      breaks = c(0, 1, 4, 8, 16, 24, 32, 40, 52),
+                      labels = c("B  "," 1","4","8","16","24","32","40","52")) +
+   scale_y_continuous("PASI Percent Change",
+                      limits = c(-100, 0),
+                      breaks = c( 0,    -25,   -50,    -75,    -90,    -100),
+                      labels = c('0%', '-25%', '50%', '-75%', '-90%', '-100%'),
+                      sec.axis = dup_axis(name = "")) +
+   ggthemes::scale_color_tableau(palette = 'Classic Cyclic') +
+   guides(color = FALSE) +
+   facet_wrap(~ TRAJ_P, nrow = 1) +
+   theme_minimal() +
+   theme(panel.grid.minor = element_blank(),
+         strip.background = element_blank(),
+         strip.text.x = element_blank(),
+         plot.margin = margin(0,0,0,0, 'pt'))
+
+
+library(waffle)
+
+d4 <- d_per %>% 
+   count(TRAJ_P, TRTC) %>% 
+   mutate(TRTC = fct_rev(TRTC))
+
+f3 <- ggplot(d4, aes(fill = TRTC, values = n)) +
+   geom_waffle(color = "white", size = 0.50, n_rows = 10, flip = TRUE) +
+   facet_wrap(~ TRAJ_P, nrow = 1) +
+   scale_x_discrete() + 
+   scale_y_continuous(name = "Treatment Counts",
+                      labels = function(x) x * 10,
+                      expand = c(0,0),
+                      sec.axis = dup_axis(name = "")) +
+   ggthemes::scale_fill_tableau(palette = 'Miller Stone', direction = -1,
+                                name = NULL,
+                                labels = c("Comparator (C)","TRT: Dose 1 (D1)","TRT: Dose 2 (D2)")) +
+   theme_minimal() +
+   theme(strip.background = element_blank(),
+         strip.text.x = element_blank(),
+         panel.grid   = element_blank(), 
+         axis.ticks.y = element_line(),
+         axis.title.x = element_blank(),
+         axis.text.x  = element_blank(),
+         axis.ticks.x = element_blank(),
+         legend.position = c(0.90, 0.75),
+         plot.margin = margin(0,0,0,0, 'pt')) 
+
+
+f4 <- ggplot(d4, aes(fill = TRTC, y = n, x = 1)) +
+   geom_bar(position="fill", stat="identity") +
+   facet_wrap(~ TRAJ_P, nrow = 1, strip.position = 'bottom',
+              labeller = as_labeller(c(`T1 (29.0%)` = "T1 (n=262) **x**",
+                                       `T2 (30.9%)` = "T2 (n=278) **y**",
+                                       `T3 (30.6%)` = "T3 (n=274) **z**",
+                                       `T4 (8.15%)` = "T4 (n=74)  **z**",
+                                       `T5 (1.33%)` = "T5 (n=12)  **z**"))) +
+   scale_x_continuous(labels = NULL,
+                      breaks = NULL) + 
+   scale_y_continuous(name = "Treatment Percents",
+                      breaks = c( 0,  0.25,  0.50,  0.75,    1),
+                      labels = c('0%', '25%', '50%', '75%', '100%'),
+                      expand = c(0,0),
+                      sec.axis = dup_axis(name = "")) +
+   ggthemes::scale_fill_tableau(palette = 'Miller Stone', direction = -1) +
+   guides(fill = FALSE) +
+   theme_minimal() +
+   theme(strip.background = element_blank(),
+         #strip.text.x = element_blank(),
+         panel.grid   = element_blank(), 
+         axis.ticks.y = element_line(),
+         axis.title.x = element_blank(),
+         axis.text.x  = element_blank(),
+         axis.ticks.x = element_blank(),
+         plot.margin = margin(0,0,0,0, 'pt')) +
+   theme(
+      strip.background = element_blank(),
+      strip.text = element_textbox(
+         size = 12,
+         color = "black", fill = "gray85", box.color = "gray85",
+         halign = 0.5, linetype = 1, r = unit(5, "pt"), width = unit(1, "npc"),
+         padding = margin(3, 0, 3, 0), margin = margin(3, 3, 3, 3)
+      )
+   )
+```
+
+```{r create-legend}
+df <- data.frame(
+   x = 0.00,
+   y = 1.0,
+   label = "**Figure Legend**: 
+   **A** Individual patients response over time 
+   **B** Individual patients response with 5 trajectories (T1, T2, T3, T4 & T5) cluster solution using a non-parametric k-means for longitudinal data 
+   **C** Grouped patients response with 5 trajectories (T) cluster solution
+   **D** Treatment composition counts by trajectories clusters (Waffle Chart) 
+   **E** Treatment composition percents by trajectories clusters (Stacked Chart w/ pairwise differences#)")
+
+t <- ggplot() +
+   geom_textbox(
+      data = df,
+      aes(x, y, label = label),
+      color = "black", fill = "gray85", box.color = "gray85",
+      width = grid::unit(1.0, "npc"), # 73% of plot panel width
+      hjust = 0, vjust = 1,
+      size = 4
+   ) +
+   scale_x_continuous(expand  = c(0,0),
+                      limits = c(0,1))+
+   scale_y_continuous(expand  = c(0,0),
+                      limits = c(0,1)) +
+   theme_void()
+```
+
+#### {.tabset .tabset-pills}
+##### Figure
+```{r combine-figures, fig.height = 11, fig.width = 12, dpi = 300}
+pacman::p_load(patchwork)
+
+(f0 + t)/f1/f2/f3/f4 + 
+   plot_annotation(tag_levels = list(c('A',' ','B','C','D','E')),
+                   caption = '#Trajectories clusters (T) not sharing the same letter (**x**,**y**,**z**) 
+                   are significantly **p<0.01** different (i.e. T1 **x** different than T2 **y**) 
+                   in their treament composition',
+                   theme = theme(plot.caption = element_textbox(size = 12))
+                   )
+```
+
+##### **E** Pairwise Differences
+```{r, fig.width = 7, fig.height = 4}
+pacman::p_load(partykit)
+pacman::p_load(ggparty)
+
+m1 <- ctree(TRTC ~ TRAJ, data = d_per)
+
+ggparty(m1) +
+   geom_edge() +
+   geom_edge_label() +
+   geom_node_label(line_list = list(aes(label = splitvar),
+                                    aes(label = gtsummary::style_pvalue(p.value, digits = 2, prepend_p = TRUE))),
+                   line_gpar = list(list(size = 10),
+                                    list(size = 9, fontface = 'bold')),
+                   ids = "inner") +
+   geom_node_label(aes(label = paste0("N = ", nodesize)),
+                   ids = "terminal",
+                   size = 4,
+                   nudge_y = 0.02,
+                   nudge_x = 0.01) +
+   geom_node_plot(gglist = list(geom_bar(aes(x = 1, fill = TRTC %>% fct_rev()),
+                                         position = position_fill()),
+                                scale_x_continuous(name = NULL,
+                                                   breaks = NULL,
+                                                   labels = NULL),
+                                scale_y_continuous(name = "Percent",
+                                                   breaks = c( 0,  0.25,  0.50,  0.75,    1),
+                                                   labels = c('0%', '25%', '50%', '75%', '100%')),
+                                ggthemes::scale_fill_tableau(palette = 'Miller Stone', direction = -1,
+                                                             name = NULL,
+                                                             labels = c("Comparator (C)",
+                                                                        "TRT: Dose 1 (D1)",
+                                                                        "TRT: Dose 2 (D2)"),
+                                                             guide = guide_legend(reverse = TRUE)),
+                                theme_minimal(),
+                                theme(panel.grid.minor = element_blank(),
+                                      plot.margin = margin(0,0,0,0, 'pt'))
+   ),
+   shared_axis_labels = TRUE
+   )
+```
+
