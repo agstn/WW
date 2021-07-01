@@ -45,5 +45,5 @@ Visualizing Risk Prediction Models. For each predictor, a color bar represents t
 <img src="https://raw.githubusercontent.com/agstn/WW/main/2021-05-12/vas-fig-gif.gif" width="90%" height="90%">
 
 ## [Patient Reported Outcomes (PROs) Instrument Properties](https://rpubs.com/acalatroni/787125)
-[Psychometric Overview](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-06-09). Presented on **June 6th, 2021**  
+[Psychometric Overview](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-06-09). Presented on **June 6th, 2021**   
 <img src="https://raw.githubusercontent.com/agstn/WW/main/2021-06-09/fpca.png" width="75%" height="75%"
