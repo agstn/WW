@@ -360,8 +360,6 @@ TABLE {data-navmenu='BY TIME' data-icon="ion-medkit"}
 ```{r}
 pacman::p_load(gtsummary)
 
-theme_gtsummary_compact()
-
 d1_t %>% 
    select(-ID) %>% 
    tbl_summary(by = TIME,
