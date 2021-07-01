@@ -1,0 +1,376 @@
+---
+title:      Patient Reported Outcomes (PROs) Instrument Properties 
+author:     Agustin Calatroni <a href='https://github.com/agstn/WW/tree/main/2021-06-09'> <i style='background-color:white' class='fa fa-github'> Wonderful-Wednesdays </i></a>
+date:       "`r format(Sys.Date(), format='%a %d %b %Y')`" 
+output: 
+  flexdashboard::flex_dashboard:
+    self_contained: true
+    source_code: embed
+    orientation: columns
+    vertical_layout: fill
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{=html}
+<style>
+.storyboard-nav .sbframelist {
+margin: 0 auto;
+width: 94%;
+height: 50px;
+overflow: hidden;
+text-shadow: none;
+margin-bottom: 8px;
+}
+
+.storyboard-nav .sbnext, .storyboard-nav .sbprev {
+float: left;
+width: 2%;
+height: 50px;
+font-size: 50px;
+}
+</style>
+```
+
+```{r knitr-defaults, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, comment = NA)
+knitr::opts_chunk$set(cache = FALSE)
+options(width=170)
+```
+
+```{r import-data-raw, include=FALSE}
+pacman::p_load(tidyverse, rio)
+pacman::p_load(labelled)
+
+d1 <- import("https://raw.githubusercontent.com/VIS-SIG/Wonderful-Wednesdays/master/data/2021/2021-06-09/PSI_WW_psychometric.csv") %>% 
+   mutate(ID = 1:n(), .before = 1)
+
+export(d1, "sdq_raw.csv")
+```
+
+```{r trasnform-data, include=FALSE}
+# item
+d1_item <- d1 %>% 
+   select(ID, starts_with("Item_")) %>% 
+   pivot_longer(cols = -1) %>% 
+   separate(name, c("VAR","NUM","TIME")) %>% 
+   pivot_wider(names_from = NUM,
+               values_from = value,
+               names_prefix = "I"
+   ) %>% 
+   select(-VAR)
+
+# sdq
+d1_sdq <- d1 %>% 
+   select(ID, contains("SDQ")) %>% 
+   rename(T2_SDQ_PRO_CHG = T2_SDQ_PRO_SUM_CHG, 
+          T3_SDQ_PRO_CHG = T3_SDQ_PRO_SUM_CHG,
+          T4_SDQ_PRO_CHG = T4_SDQ_PRO_SUM_CHG) %>% 
+   pivot_longer(cols = -1) %>% 
+   separate(name, c("TIME","VAR","PRO","TYPE")) %>% 
+   select(-VAR,-PRO) %>% 
+   pivot_wider(names_from = TYPE,
+               values_from = value) %>% 
+   rename(SDQ     = SUM,
+          SDQ_CHG = CHG)
+
+# anchor-pgic
+d1_pgic <- d1 %>% 
+   select(ID, starts_with("PGIC")) %>% 
+   pivot_longer(cols = -1) %>% 
+   separate(name, c("VAR","TIME")) %>% 
+   rename(PGIC_CHG = value) %>% 
+   select(-VAR)
+
+# anchor-fatigue
+d1_fatigue <- d1 %>% 
+   select(ID, contains("fatigue")) %>% 
+   pivot_longer(cols = -1) %>% 
+   separate(name, c("TIME","VAR","PRO")) %>% 
+   rename(FATIGUE = value) %>% 
+   select(-VAR, -PRO)
+
+# anchor-flu
+d1_flu <- d1 %>% 
+   select(ID, contains("flu")) %>% 
+   pivot_longer(cols = -1) %>% 
+   separate(name, c("TIME","VAR","PRO")) %>% 
+   rename(FLU = value) %>% 
+   select(-VAR, -PRO)
+
+# merge-all-data
+d1_t <- left_join(d1_item,
+                  d1_sdq) %>% 
+   left_join(d1_pgic) %>% 
+   left_join(d1_fatigue) %>% 
+   left_join(d1_flu)
+
+# rename
+d1_t <- d1_t %>% 
+   rename(`SDQ-12`     = SDQ,
+          `SDQ-12_CHG` = SDQ_CHG)
+
+# add-labels
+var_label(d1_t) <- list(ID  = 'Study ID',
+                        I1  = 'I1 Dry Cough',
+                        I2  = 'I2 Loss of Smell',
+                        I3  = 'I3 Skin Rash',
+                        I4  = 'I4 Fever',
+                        I5  = 'I5 Headache',
+                        I6  = 'I6 Short of Breath',
+                        I7  = 'I7 Diarrhoea',
+                        I8  = 'I8 Sore Throat',
+                        I9  = 'I9 Fatigue',
+                        I10 = 'I10 Runny Nose',
+                        I11 = 'I11 Ocular Issues',
+                        I12 = 'I12 Loss of Taste',
+                        `SDQ-12`      = 'SDQ-12 Simulated Disease Questionnaire',
+                        `SDQ-12_CHG`  = 'SDQ-12 Change',
+                        PGIC_CHG      = 'PGIC Patient Global Impression of Change',
+                        FATIGUE       = 'Fatigue PRO',
+                        FLU           = 'FLU PRO')
+
+# export-rds
+export(d1_t, "sdq_trans.rds")
+```
+
+ALL TIMES {.storyboard}
+===================================================
+
+### Focused Principal Component Analysis
+
+```{r}
+pacman::p_load(psy)
+
+fpca(`SDQ-12` ~ I1 + I2 + I3 + I4 + I5 + I6 + I7 + I8 + I9 + I10 + I11 + I12 + 
+        FATIGUE + FLU,
+     data = d1_t,
+     cx = 0.5)
+```
+
+------------------------------------------------------------------------
+
+Graphical representation similar to a principal components analysis but adapted to data structured with dependent/independent variables
+
+Focused PCA of Psychometric example dataset and their relationship with SDQ-12 The relationships between non
+dependent variables are interpreted like in a PCA biplot: correlated variables are close or diametrically
+opposite (for negative correlations), while independent variables make a right angle with the origin. Yellow
+dots represent negative correlations with SDQ-12, while green dots represent positive correlations. Dots falling
+inside the red circle are significantly correlated with SDQ-12. The closer they are to the centre of the circle, the
+more strongly correlated with PIKE they are. The red line indicates the limit of significance (p <0.05) 
+
+R Package: psy - Various procedures used in psychometry  
+[fpca: Focused Principal Components Analysis](https://rdrr.io/cran/psy/man/fpca.html)
+
+Reference  
+[Falissard B, Focused Principal Components Analysis: looking at a correlation matrix with a particular interest in a given variable. Journal of Computational and Graphical Statistics (1999), 8(4): 906-912](https://www.tandfonline.com/doi/abs/10.1080/10618600.1999.10474855)
+
+
+### Scatterplot matrix (aka SPLOM)
+
+```{r, fig.width = 12, fig.height = 12}
+pacman::p_load(lattice, latticeExtra, grid)
+pacman::p_load(hexbin)
+pacman::p_load(RColorBrewer)
+pacman::p_load(vcd, colorspace)
+
+my.diag.panel <- function(x=NULL, varname = NULL,...){
+   
+   grid.text(varname, x=.02, y=0.98, just=c("left","top"), gp=gpar(cex=0.85, fontface = 2))
+   
+   if (is.numeric(x)) {
+      yrng <- current.panel.limits()$ylim
+      ok <- is.finite(x)
+      if (any(ok))
+         d <- density(x[ok],cut=0)
+      d$y <- with(d, yrng[1] + 0.80 * diff(yrng) * y / max(y, na.rm=T) )
+      panel.lines(d, col.line = 'black')
+   }
+   
+   if (is.factor(x)) {
+      
+      if (nlevels(x)>=2){
+         mosaic(round(prop.table(table(x))*100,0),split_vertical = T, newpage=F,
+                spacing = spacing_equal(unit(0.2, "lines")),
+                gp = gpar(fill=rev(gray.colors(nlevels(x), start=0.6)),
+                          col="transparent"),
+                margins=c(1.5,0,0,0),
+         )
+      }
+   }
+}
+
+my.upper.panel <- function(x, y, ...) {
+   
+   r    <- cor.test(as.numeric(x),
+                    as.numeric(y))
+   ncol <- 20
+   pal     <- rev(diverge_hcl(ncol, c = 100, l = c(50, 90), power = 1))
+   col.ind <- cut(r$estimate,breaks=seq(-1,1,length.out=(ncol+1)),labels=FALSE)
+   panel.fill(col = pal[col.ind])
+   grid.text(format(r$estimate,digits=2,nsmall=2), 0.5, 0.5,  gp=gpar(fontface=ifelse(r$p.value<0.05,2,1),cex=1))
+}
+
+my.lower.panel <- function (x, y, ...) {
+   
+   if (is.numeric(x) & is.numeric(y)) {
+      panel.hexbinplot(x, y,  colramp = LinGray, xbin = 25, trans = sqrt, ...)
+      panel.loess(x, y, ..., col = 'red3', lwd = 2)
+   }
+   
+   if (is.numeric(y) & is.factor(x)){
+      trellis.par.set(plot.symbol=list(pch=151,cex=1,col="black"),
+                      box.rectangle=list(col="black",
+                                         fill=rev(gray.colors(nlevels(x), start=0.6)),
+                                         lwd=1,lty=1),
+                      box.umbrella=list(col="black",lwd=1,lty=1))
+      if (nlevels(x)<4)  panel.bwplot(x,y,horizontal=F,pch="|",notch=T,varwidth=T)
+      if (nlevels(x)>=4) panel.bwplot(x,y,horizontal=F,pch="|",notch=F,varwidth=T,coef=0)
+   }
+   
+   if (is.numeric(x) & is.factor(y)){
+      trellis.par.set(plot.symbol=list(pch=124,cex=1,col="black"),
+                      box.rectangle=list(col="black",
+                                         fill=rev(gray.colors(nlevels(y), start=0.6)),
+                                         lwd=1,
+                                         lty=1),
+                      box.umbrella=list(col="black",lwd=1,lty=1))
+      if (nlevels(y)<4) panel.bwplot(x,y,horizontal=T,pch="|",notch=T,varwidth=T)
+      if (nlevels(y)>=4) panel.bwplot(x,y,horizontal=T,pch="|",notch=F,varwidth=T,coef=0)
+   }
+   
+   if (is.factor(x) & is.factor(y)){
+      tt <-  table(x,y)
+      tp <-  round(prop.table(table(x,y))*100,0)
+      tp <- ifelse(tp<=1,"",tp)
+      mosaic(tt,shade=T,newpage=F, legend=F, #labeling=F,
+             margins=c(0.15,0.15,0.15,0.15),
+             #gp = gpar(fill = brewer.pal(5, "PuOr"))
+             gp = shading_binary(col = brewer.pal(4, "PuOr")[2:3])
+             #labeling = labeling_cells(text = tp, clip = F, gp_text=gpar(cex=0.5))
+      )
+
+   }
+}
+
+# data
+d1_t2 <- d1_t %>% 
+   select(`SDQ-12`, FATIGUE, FLU, I1:I12) %>% 
+   mutate(across(starts_with("I"), ~as.factor(.x)))
+
+d1_t3 <- d1_t2 %>% 
+   mutate(across(where(is.factor), ~as.numeric(.x)))
+
+vc <- Hmisc::varclus(as.matrix(cor(d1_t3,use="pairwise.complete.obs")), 
+                        similarity="pearson", 
+                        type="similarity.matrix")
+
+dd.col  <- as.dendrogram(vc$hclust)
+col.ord <- order.dendrogram(dd.col)
+
+# Figure
+splom(~d1_t2[, col.ord], 
+      as.matrix = TRUE,
+      xlab = NULL,
+      diag.panel  = my.diag.panel,
+      upper.panel = my.upper.panel,
+      lower.panel = my.lower.panel,
+      par.settings=list(strip.background=list(col="gray90")),
+      legend = list(
+         right = list( fun = draw.colorkey,
+                       args = list(key = list(col = brewer.pal(11, "RdBu"), 
+                                              at = seq(-1,1,0.20),
+                                              labels = as.character(seq(-1, 1, 0.2)),
+                                              height = 0.75)),
+                       draw = FALSE ),
+         top = list(fun = dendrogramGrob, 
+                    args = list(x = dd.col, ord = col.ord, size = 2, side = "top"))
+      )
+)
+```
+
+------------------------------------------------------------------------
+
+Scatterplot matrix visualizations show a series of pairwise relationships that can be customized to meet many common needs in clinical research. Details and custom analyses can be incorporated into each pane of the matrix to give a detailed description; furthermore, they can be arranged by ordering the variables accordingly to their associations. The figure below illustrates this approach using the Psychometric example dataset at all times (n=2000).
+- We highlight the pearson correlations (upper triangle, bold for those with statistical significance),  
+- marginal distributions using a kernel density plots (diagonal black lines) to visualize the distribution of the variable over a continuous interval or   
+- stacked barcharts for discrete distributions.  
+- Hexagonal Binning scatterplots with LOESS (Local Polynomial Regression) regression (lower triangle red lines) are added to each continuous-continuous panel  
+- mosaic plots to each discrete-discrete panel (where orange represents cells with more than expected while purple less than expected counts) and  
+- boxplots for each discrete-continuous panel. We also order columns (and thus also the associated rows) of the display according to the correlation between the variables (variables with stronger correlations will appear next to each other) by using a hierarchical clustering approach and include the associated dendrogram (showing in the top margin) in the figure.  
+
+[splom: Scatter Plot Matrices](https://rdrr.io/cran/lattice/man/splom.html)
+
+### Dataset overview (aka codebook)
+
+```{r}
+pacman::p_load(modelsummary)
+
+# rename using labels
+d1_t3 <- d1_t %>% select( names(d1_t2[col.ord]) )
+for(i in 1:ncol(d1_t3)) {
+   names(d1_t3)[i] <- var_label(d1_t3)[i][[1]]
+}
+
+datasummary_skim(d1_t3)
+```
+
+FPCA {data-navmenu='BY TIME' data-icon="ion-arrow-graph-up-right"}
+===================================================
+
+## FPCA {.tabset}
+
+### TIME 1 
+
+```{r}
+fpca(`SDQ-12` ~ I1 + I2 + I3 + I4 + I5 + I6 + I7 + I8 + I9 + I10 + I11 + I12 + 
+        FATIGUE + FLU,
+     data = d1_t %>% filter(TIME == "T1"),
+     cx = 0.75)
+```
+
+### TIME 2
+```{r}
+fpca(`SDQ-12` ~ I1 + I2 + I3 + I4 + I5 + I6 + I7 + I8 + I9 + I10 + I11 + I12 +
+        FATIGUE + FLU + PGIC_CHG + `SDQ-12_CHG`,
+     data = d1_t %>% filter(TIME == "T2"),
+     cx = 0.75)
+```
+
+### TIME 3
+```{r}
+fpca(`SDQ-12` ~ I1 + I2 + I3 + I4 + I5 + I6 + I7 + I8 + I9 + I10 + I11 + I12 +
+        FATIGUE + FLU + PGIC_CHG + `SDQ-12_CHG`,
+     data = d1_t %>% filter(TIME == "T3"),
+     cx = 0.75)
+```
+
+### TIME 4
+```{r}
+fpca(`SDQ-12` ~ I1 + I2 + I3 + I4 + I5 + I6 + I7 + I8 + I9 + I10 + I11 + I12 +
+        FATIGUE + FLU + PGIC_CHG + `SDQ-12_CHG`,
+     data = d1_t %>% filter(TIME == "T4"),
+     cx = 0.75)
+```
+
+TABLE {data-navmenu='BY TIME' data-icon="ion-medkit"}
+===================================================
+
+```{r}
+pacman::p_load(gtsummary)
+
+theme_gtsummary_compact()
+
+d1_t %>% 
+   select(-ID) %>% 
+   tbl_summary(by = TIME,
+               missing_text = 'Missing',
+               digits = all_continuous() ~ 1,
+               type = everything() ~ "continuous",
+               statistic = list(all_continuous() ~ c("{mean} ({sd})")
+               )
+   )
+```
+
+
