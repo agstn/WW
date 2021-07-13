@@ -34,7 +34,7 @@ font-size: 50px;
 ```
 
 ```{r knitr-defaults, include=FALSE}
-knitr::opts_chunk$set(warning = FALSE, message = FALSE, comment = NA)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, comment = NA) 
 knitr::opts_chunk$set(cache = FALSE)
 options(width=170)
 ```
@@ -205,9 +205,9 @@ my.upper.panel <- function(x, y, ...) {
    
    r    <- cor.test(as.numeric(x),
                     as.numeric(y))
-   ncol <- 20
-   pal     <- rev(diverge_hcl(ncol, c = 100, l = c(50, 90), power = 1))
-   col.ind <- cut(r$estimate,breaks=seq(-1,1,length.out=(ncol+1)),labels=FALSE)
+   
+   pal     <- RColorBrewer::brewer.pal(10, "RdBu")
+   col.ind <- cut(r$estimate, breaks=seq(-1,1, length.out = (length(pal)+1)), labels = FALSE)
    panel.fill(col = pal[col.ind])
    grid.text(format(r$estimate,digits=2,nsmall=2), 0.5, 0.5,  gp=gpar(fontface=ifelse(r$p.value<0.05,2,1),cex=1))
 }
@@ -250,7 +250,7 @@ my.lower.panel <- function (x, y, ...) {
              gp = shading_binary(col = brewer.pal(4, "PuOr")[2:3])
              #labeling = labeling_cells(text = tp, clip = F, gp_text=gpar(cex=0.5))
       )
-
+      
    }
 }
 
@@ -263,11 +263,13 @@ d1_t3 <- d1_t2 %>%
    mutate(across(where(is.factor), ~as.numeric(.x)))
 
 vc <- Hmisc::varclus(as.matrix(cor(d1_t3,use="pairwise.complete.obs")), 
-                        similarity="pearson", 
-                        type="similarity.matrix")
+                     similarity="pearson", 
+                     type="similarity.matrix")
 
 dd.col  <- as.dendrogram(vc$hclust)
 col.ord <- order.dendrogram(dd.col)
+
+library(scales)
 
 # Figure
 splom(~d1_t2[, col.ord], 
@@ -279,8 +281,8 @@ splom(~d1_t2[, col.ord],
       par.settings=list(strip.background=list(col="gray90")),
       legend = list(
          right = list( fun = draw.colorkey,
-                       args = list(key = list(col = brewer.pal(11, "RdBu"), 
-                                              at = seq(-1,1,0.20),
+                       args = list(key = list(col = brewer.pal(10, "RdBu"), 
+                                              at = seq(-1,1, 0.20),
                                               labels = as.character(seq(-1, 1, 0.2)),
                                               height = 0.75)),
                        draw = FALSE ),
