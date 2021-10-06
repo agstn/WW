@@ -63,3 +63,8 @@ Visualizing Risk Prediction Models. For each predictor, a color bar represents t
 [Study data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-08-11). Presented on **August 11th, 2021** 
   
 <img src="https://raw.githubusercontent.com/agstn/CGM/main/CGM-trelliscope.png" width="90%" height="90%">
+
+### [Competing Risk Tables Visualization](https://agstn.github.io/nijman/nijman_tables_flx.html)  
+[Study data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-09-08). Presented on **September 8thth, 2021** 
+  
+<img src="https://raw.githubusercontent.com/agstn/nijman/main/nijman_tables_flx.png" width="90%" height
