@@ -1,0 +1,238 @@
+---
+params:
+    study:  'CDISCPILOT01'
+    file:   'adsl.xpt'
+title:      'Study: `r params$study`  &nbsp; &nbsp; Data: `r params$file`' 
+date:       "<i class='fas fa-file-contract'></i> Created: `r format(Sys.time(),format='%A %d %b %Y  %I:%M %p %Z')`"
+output: 
+   flexdashboard::flex_dashboard:
+     self_contained: true
+     mathjax: NULL
+     source_code: "https://github.com/agstn/describer" 
+---
+
+```{=html}
+<style type="text/css">
+
+.main-container {
+max-width:    1200px;
+margin-left:  auto;
+margin-right: auto;}
+
+.hidden-column-headers .rt-thead {
+position: absolute;
+width: 1px;
+height: 1px;
+padding: 0;
+margin: -1px;
+overflow: hidden;
+clip: rect(0, 0, 0, 0);
+border: 0;
+}
+
+.rt-search{
+align-self: baseline;
+width: 400px;
+margin-bottom: 0px;
+}
+
+svg.main-svg{
+overflow:visible !important;
+}
+
+</style>
+```
+
+```{r knitr-defaults}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, comment = NA)
+knitr::opts_chunk$set(cache = FALSE)
+options(width=170)
+```
+
+```{r load-packages}
+# devtools::install_github("agstn/describer")
+library(describer)
+library(tidyverse)
+library(haven)
+library(crosstalk)
+```
+
+```{r sample-vars, include=FALSE}
+adsl <-read_xpt(params$file)
+dim  <- dim(adsl)
+rdt  <- format(file.info(params$file)$mtime,format='%A %d %b %Y  %I:%M %p %Z')
+adsl_nest_describe <- describe_data( adsl %>% select(-STUDYID) )
+```
+
+# DESCRIBER {#main}
+
+Inputs {.sidebar data-width=300}
+-------------------------------------
+<br> 
+<center> 
+<img src="https://raw.githubusercontent.com/agstn/describer/main/inst/hex/hex-describer.png" width="40%" height="40%"> 
+</center> 
+<br>
+
+```{r}
+d_reactable <- adsl_nest_describe   
+
+d_reactable_shared <- SharedData$new(d_reactable)
+
+filter_select('type', 'variable TYPE',    d_reactable_shared, ~ TYPE)
+filter_select('var',  'variable NAME',    d_reactable_shared, ~ VAR)
+filter_select('lab',  'variable LABEL',   d_reactable_shared, ~ LABEL)
+filter_select('n',    'variable COMPLETE',d_reactable_shared, ~ ifelse(n == dim[1], 'YES', 'NO'))
+
+filter_slider('missing', 'variable % MISSING', d_reactable_shared,  ~ 100*(missing/dim[1]),
+              width = 250,
+              post = '%',
+              min = 0, max = 100,
+              dragRange = FALSE,
+              step = 5, round = TRUE, sep = '', ticks = TRUE)
+
+filter_slider('distinct', 'variable # DISTINCT', d_reactable_shared, ~ distinct,
+              width = 250,
+              min = 1, dragRange = FALSE,
+              step = 5, ticks = FALSE)
+```
+
+
+Column
+-------------------------------------
+### <i class='fas fa-th'></i> **`r toupper(params$file)`** DATA (DATE **`r rdt`**) with **`r dim[1]`** OBSERVATIONS and **`r dim[2]`** VARIABLES  
+
+```{r create-reactable-1}
+describer(data = d_reactable, 
+          data_shared = d_reactable_shared)
+```
+
+# DETAILS {#details}
+
+Column
+-------------------------------------
+### <i class="fas fa-book"></i> **OVERVIEW** About the **describer** package // Go back to [main page](#main)
+
+> "If I take it up I must understand every detail," said he. "Take time to consider. The smallest point may be the most essential." --- Sherlock Holmes *The Adventure of the Red Circle*
+
+For a couple of [decades](https://twitter.com/f2harrell/status/1449014869798395905), we have been loyal users of the [`Hmisc`](https://cran.r-project.org/web/packages/Hmisc/index.html) package in general, and the [`Hmisc::describe`](https://rdrr.io/cran/Hmisc/man/describe.html) function in particular, as a way to explore data before any analyses. As is often the case in the R ecosystem, there are numerous ways to accomplish this task (see summarizing data blog posts [here](https://dabblingwithdata.wordpress.com/2018/01/02/my-favourite-r-package-for-summarising-data) and [here](https://dabblingwithdata.wordpress.com/2018/02/26/r-packages-for-summarising-data-part-2/) for a dated yet extensive review). Our appreciation for `Hmisc::describe` originated from its concise look (pre-[`rmarkdown`](https://rmarkdown.rstudio.com/) days implementing Sweave/Latex/PDF) and its ability to link with SAS formatted datasets (containing labels, formats, special missing). Indeed, in the clinical research industry, SAS formatted datasets (SAS transport `.xpt` or native `.sas7bdat` files) remain widely used while the R language continues to grow in [popularity](https://rinpharma.com/). [Dr. Frank Harrell](https://www.fharrell.com/), who developed the Hmisc package, has been, from our perspective, a luminary as he lays out the possibilities embedded in the R language, particularly in the clinical research environment.
+
+For some time now, we have wanted to reengineer the aforementioned `describe` function to provide a modern and interactive interface to the static (HTML and/or PDF) report. The [`datadigest`](https://cran.r-project.org/web/packages/datadigest/index.html) package was an effort to build an interactive data explorer inspired by `Hmisc::describe`; the package leveraged `JavaScript` for interactivity, with `htmlwidget` and `Shiny` interfaces for use in R. Since the release of `datadigest`, the R community has continued to deliver increasingly powerful frameworks for interactive displays. Therefore, we took the [2021 RStudio Table Contest](https://www.rstudio.com/blog/rstudio-table-contest-2021/) as an opportunity to accomplish the goal of building an interactive interface for `describe` using tools available in R. We have utilized the power of [`reactable`](https://cran.r-project.org/web/packages/reactable/index.html) embedded with [`plotly`](https://cran.r-project.org/web/packages/plotly/index.html) interactive figures within a [`flexdashboard`](https://pkgs.rstudio.com/flexdashboard/) to generate concise summaries of every variable in a dataset with minimal user configuration. In order for other users to readily deploy such a powerful summary table, we wrapped our work into the [{**describer**}](https://github.com/agstn/describer) package.
+
+For this challenge, we selected a [CDISC](https://www.cdisc.org/) (Clinical Data Interchange Standards Consortium) [ADaM](https://www.cdisc.org/standards/foundational/adam) (Analysis Data Model) ADSL (Analysis Data Subject Level) dataset as an illustration. The ADSL dataset structure is one record per subject and contains variables such as subject-level population flags, planned and actual treatment variables, demographic information, randomization factors, subgrouping variables, and important dates originated from the [PHUSE CDISC Pilot replication study](https://github.com/phuse-org/phuse-scripts/tree/master/data/adam/cdisc).
+
+
+
+<b>AUTHORS</b> <br>
+
+---
+
+- [Agustin Calatroni](https://github.com/agstn)
+- Becca Krouse
+- Stephanie Lussier
+
+Column {.tabset}
+-------------------------------------
+
+### <i class="fas fa-wrench"></i> **INSTRUCTIONS** 
+
+
+The {**describer**} package provides an interface for the interactive table
+
+{**describer**} consists of two main functions:
+
+
+- `describe_data()`: creates a comprehensive tibble of variable metadata using `Hmisc::describe` as the engine
+
+- `describer()`: creates an interactive table using `Hmisc::describe` + `reactable`.
+
+---
+
+##### Usage:
+
+Install the package from GitHub:
+
+```r
+devtools::install_github("agstn/describer")
+library(describer)
+```
+
+Create a tibble summary of the dataset using `Hmisc::describe` as the engine. This will be passed into the `describer` function next:
+
+```r
+dat_descr <- describe_data(data)
+```
+
+Display results using `describer()`, which creates a `reactable` display with columns for variable number (NO), type of variable (TYPE), variable name and label (NAME - LABEL), number observed (OBSERVED), number and percent missing (MISSING), number of unique values (DISTINCT), and an interactive display (INTERACTIVE FIGURE).
+
+For each variable, there is additional dropdown details based on variable type (character, numeric, date), which are viewable by selecting `r fontawesome::fa("caret-right")`.
+
+```r
+describer(dat_descr)
+```
+
+---
+
+##### Interactivity:
+
+- Built-in Interactivity:
+
+- *Search*: Search the dataset variables by label
+
+- *Sort*: Sort columns of the `reactable` variables (alphabetically or numerically)
+
+- *Figures*: Interactive figures are provided for each dataset variable dependent on variable type. Zoom and hover for more details.
+
+- Additional Interactivity:
+
+- *Filters*: We can add linked filters by leveraging the power of {**crosstalk**}. Filters can be created for any of the columns of the describe_data by adding **crosstalk** widgets and specifying a 'SharedData' object in the `describer()` function. In this example, we offer subsetting by variable type and filtering based on % missing in the sidebar.
+
+---
+
+##### Dependencies:
+
+Install the latest development version of the `reactable` and `reactablefmtr` packages from GitHub:
+
+```r
+devtools::install_github("glin/reactable")
+devtools::install_github("kcuilla/reactablefmtr")
+```
+
+### <i class='fas fa-chart-line'></i> **METRICS**
+
+```{r}
+pacman::p_load(reactable, reactablefmtr)
+
+metrics <- read.csv('https://raw.githubusercontent.com/agstn/describer/main/data-raw/metric.csv')
+
+metrics %>%
+    mutate(PNG = str_glue('https://raw.githubusercontent.com/agstn/describer/main/inst/images/{PNG}')) %>%
+    reactable(
+      defaultSorted = c("METRIC"),
+      columns = list(
+        METRIC = colDef(
+          width = 125,
+          cell = function(value, index) {
+            htmltools::tags$a(href = .[index, "LINK"], target = "_blank", as.character(value))
+          }
+        ),
+        PNG = colDef(name = 'visual aid',
+                     cell = embed_img(height = 120, width = 305),
+                     sortable = FALSE,
+                     html = TRUE,
+                     width = 350,
+                     style = list(padding = "0px 0px", margins = "0px 0px")
+        ),
+        LINK = colDef( show = FALSE),
+        DEFINITION = colDef( width = 250,
+                             sortable = FALSE)
+      ),
+      searchable = FALSE,
+      pagination = FALSE, # all one page,
+      compact = TRUE,
+      highlight = TRUE,
+      defaultExpanded = FALSE,
+      height = 850,
+      theme = reactablefmtr::fivethirtyeight()
+    )
+```
