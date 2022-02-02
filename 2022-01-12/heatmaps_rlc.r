@@ -1,13 +1,13 @@
 # packages
-pacman::p_load(tidyverse, rio)
-pacman::p_load(rlc)
+library(tidyverse)
+library(rlc)
 
 # data
-d1 <- import("C:/R/Wonderful-Wednesdays/2022-01-12/data_sample.csv") %>% 
+d1 <- read.csv("https://raw.githubusercontent.com/agstn/WW/main/2022-01-12/data_sample.csv") %>% 
    select(AccrualTime, FollowUpTime, HazardRatio, HazardRate = hazard_rate, Power, NTotal) %>% 
    mutate(TotalTime = AccrualTime + FollowUpTime, .after = FollowUpTime)
 
-d2 <- import("C:/R/Wonderful-Wednesdays/2022-01-12/data_power.csv") %>% 
+d2 <- read.csv("https://raw.githubusercontent.com/agstn/WW/main/2022-01-12/data_power.csv") %>% 
    select(AccrualTime, FollowUpTime, HazardRatio, HazardRate = hazard_rate, Power, NTotal) %>% 
    mutate(TotalTime = AccrualTime + FollowUpTime, .after = FollowUpTime,
           Power = round(100*Power,0))
@@ -153,7 +153,6 @@ lc_colourSlider(chart = "Fig3",
                 title = "Power",
                 titleSize = 15, titleY = 12,
                 paddings = list(top = 35, left = 35, bottom = 10, right = 20))
-
 
 lc_html(content = 
            "<b>Heatmaps:<a href='https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2022/2022-01-12'>
