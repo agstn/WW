@@ -1,5 +1,6 @@
 # packages
 library(tidyverse)
+library(RColorBrewer)
 library(rlc)
 
 # data
@@ -64,7 +65,7 @@ lc_heatmap(
    chartId = "Fig1",
    rowTitle = "Accural Time",
    colTitle = "Follow-up Time",
-   palette = rev(RColorBrewer::brewer.pal(11, "RdYlGn")),
+   palette = rev(brewer.pal(11, "RdYlGn")),
    colourDomain = c(21, 39),
    paddings = list(top = 50, left = 30, bottom = 30, right = 30),
    showPanel  = FALSE,
@@ -100,7 +101,7 @@ lc_heatmap(
    chartId = "Fig2",
    rowTitle = "Hazard Ratio",
    colTitle = "Hazard Rate (%)",
-   palette = RColorBrewer::brewer.pal(9, "Blues"),
+   palette = brewer.pal(9, "Blues"),
    colourDomain = c(4800, 24000),
    paddings = list(top = 50, left = 30, bottom = 30, right = 30),
    showValue = FALSE,
@@ -137,7 +138,7 @@ lc_heatmap(
    chartId = "Fig3",
    rowTitle = "Hazard Ratio",
    colTitle = "Hazard Rate (%)",
-   palette = RColorBrewer::brewer.pal(9, "Oranges"),
+   palette = brewer.pal(9, "Oranges"),
    colourDomain = c(50, 100),
    paddings = list(top = 50, left = 30, bottom = 30, right = 30),
    showValue = FALSE,
