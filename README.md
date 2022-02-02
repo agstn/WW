@@ -69,12 +69,17 @@ Visualizing Risk Prediction Models. For each predictor, a color bar represents t
   
 <img src="https://raw.githubusercontent.com/agstn/nijman/main/nijman_tables_flx.png" width="90%" height="90%">
 
-### CGI-I data example
+### [CGI-I data example](https://github.com/agstn/WW/tree/main/2021-10-13)
 [Study data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-10-13). Presented on **October 10th, 2021** 
   
 <img src="https://raw.githubusercontent.com/agstn/WW/main/2021-10-13/ww_mci.png" width="90%" height="90%">
 
-### Alzheimer demographic data set
+### [Alzheimer demographic data set](https://github.com/agstn/WW/tree/main/2021-11-10)
 [Study data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-11-10). Presented on **Novermber 10th, 2021** 
   
 <img src="https://raw.githubusercontent.com/agstn/WW/main/2021-11-10/adsl_describer.png" width="90%" height="90%">
+
+### [Uncertainty in study planning](https://github.com/agstn/heatmaps_rlc)
+[Study data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2022/2022-01-12). Presented on **January 12th, 2022** 
+
+<img src="https://raw.githubusercontent.com/agstn/heatmaps_rlc/main/heatmaps_rlc.png" width="100%" height="100%">
