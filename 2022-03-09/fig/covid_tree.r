@@ -57,9 +57,9 @@ f_tree <- ggplot(data = dd_c,
    scale_fill_manual(values = cols) +
    theme_light() +
    theme(panel.grid   = element_blank(),
-         strip.text   = element_text(size = 12, face = 'bold'),
-         panel.spacing = unit(0, "lines"),
+         strip.text   = element_text(size = 18, face = 'bold'),
+         panel.spacing = unit(1, "lines"),
          legend.position="none")
 
-ggsave('./fig/covid_tree.pdf', plot = f_tree, width = 4, height = 8)
-
+ggsave('./fig/covid_tree.pdf', plot = f_tree, width = 5, height = 10)
+ggsave('./fig/covid_tree.png', plot = f_tree, width = 5, height = 10)
