@@ -1,0 +1,261 @@
+---
+title:      'Visualize the impact of changing definitions of HiSCR response on the results'
+author:     Agustin Calatroni 
+date:       "`r format(Sys.Date(), format='%a %d %b %Y')`" 
+output: 
+   flexdashboard::flex_dashboard:
+     orientation: columns
+     self_contained: true
+     source_code: "https://github.com/agstn/WW/tree/main/2022-04-13"
+---
+
+```{=html}
+<style type="text/css">
+.main-container {
+max-width:    1200px;
+margin-left:  auto;
+margin-right: auto;}
+.rt-compact .rt-td-inner{
+padding: 0px 6px;
+}
+</style>
+```
+
+```{r knitr-defaults}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, comment = NA)
+knitr::opts_chunk$set(cache = FALSE)
+options(width=170)
+```
+
+```{r load-packages}
+pacman::p_load(tidyverse, rio)
+pacman::p_load(reactable, reactablefmtr, plotly)
+pacman::p_load(htmltools, htmlwidgets, crosstalk)
+```
+
+```{r import-data}
+#https://themockup.blog/posts/2020-05-29-client-side-interactivity-do-more-with-crosstalk/
+#https://github.com/kcuilla/2020-RStudio-Table-Contest-Entry2
+
+dd_mod <- rio::import('dat/HiSCR_dat_mod.rds') %>% 
+   select(an.count, abscesses, drain.fist, n_y, 
+          p_a:p_l10) 
+
+dd_cross <- SharedData$new(dd_mod)
+```
+
+# Definitions
+
+Inputs {.sidebar data-width=250}
+--------------------------------------------------
+
+A patient reaches a **HiSCR response**, if all of the following three conditions are met, when the baseline data are compared to the follow-up data (at week 16):
+
+**at least a XX% decrease in (AN) count** <br>
+AN count is defined as the sum of the number of abscess and the number of inflammatory nodules
+
+```{r input-filters-1}
+filter_slider(
+   id = "an.count",
+   #label = "% (AN) count decrease",
+   label = NULL,
+   sharedData = dd_cross,
+   column = ~ an.count,
+   ticks = TRUE,
+   post = '%',
+   step = 25,
+   width = "75%")
+```
+
+**XX decrease in the number of abscesses**
+
+```{r input-filters-2}
+filter_slider(
+   id = "abscesses",  
+   #label = "decrease # abscesses", 
+   label = NULL,
+   sharedData = dd_cross,
+   pre = '#',
+   column = ~abscesses, 
+   step = 1,
+   width = "75%")
+```
+
+**XX decrease in the number of draining fistulae**
+
+```{r input-filters-3}
+filter_slider(
+   id = "drain.fist",  
+   #label = "decrease # daining fistulae", 
+   label = NULL,
+   sharedData = dd_cross,
+   pre = '#',
+   column = ~drain.fist, 
+   step = 1,
+   width = "75%")
+```
+
+Column
+--------------------------------------------------
+
+### VOLCANO PLOT {data-height=825}
+
+```{r figure-plotly}
+g1 <- ggplot(data = dd_cross,
+             aes(x = d_n, 
+                 y = p_l10,
+                 size = n_y,
+                 alpha = 0.5,
+                 text = paste('Difference (95%CI)',   d_e, d_c,
+                              '<br> -log10(p)=', round(p_l10,2), '& p:', d_f,
+                              '<br> HiSCR (Yes):', n_y))) +
+   geom_vline(xintercept = 0,            col = 'gray50') +
+   geom_hline(yintercept = -log10(0.05), col = 'gray50') +
+   geom_point() +
+   scale_alpha_identity() +
+   scale_x_continuous(name = 'Difference<br>(Active-Placebo)',
+                      limits = c(-15, 40),
+                      breaks = c(-10, -5, 0, 5, 10, 20, 30, 40)) +
+   scale_y_continuous(name = '-log10(p-value)',
+                      expand = c(0.02, 0.02),
+                      limits = c(0, 15),
+                      breaks = c(0,    1.3,             4.6,             5,    6.9,                 10,   15),
+                      labels = c('0', '1.3\n(p=0.05)', '\n 4.6\n(p=0.01)', '5\n','6.9\n(p=0.001)', '10', '15'),
+                      sec.axis = sec_axis( trans=~ 1/(10^(.)),
+                                           breaks = c(0.99,     0.5,   0.05,  0.01,    0.001,   0.0001),
+                                           labels = c('>0.99', '0.5', '0.05', '0.01', '0.001', '0.0001'),
+                                           name="p-value")
+   ) +
+   theme_bw()
+
+
+ggplotly(g1,
+         tooltip = c("text"),
+         width  = 685,
+         height = 650) %>% 
+   add_text(
+      x = ~32, y = ~14.34,
+      text = ~"HiSCR-Original Def.",
+      showlegend = FALSE, hoverinfo = "none",
+      color = I("black"), size = I(9)
+   ) %>% 
+   layout(
+    xaxis = list(fixedrange = TRUE),
+    yaxis = list(fixedrange = TRUE)
+  )
+```
+
+
+### ORIGINAL DEFINITION RESULTS {data-height=175}
+
+```{r table-gtsummary}
+pacman::p_load(gtsummary)
+
+dd_w <- rio::import('dat/HiSCR_dat_w.rds') 
+
+theme_gtsummary_compact()
+
+dd_w %>% 
+   tbl_summary(by      = TRT,
+               include = HiSCR ,
+               label = list(HiSCR ~ 
+                               "<=50% (AN) count +  
+                              #0 abscesses +
+                              #0 draining fistulae"),
+               statistic = all_categorical(dichotomous = TRUE) ~ "{p}% ({n})") %>% 
+   add_difference(pvalue_fun = ~style_ratio(-log10(.x), digits = 3)) %>% 
+   modify_cols_merge(pattern = "<b>{estimate}</b> <br><small>({ci})</small>") %>% 
+   modify_header(estimate  = "Difference <br><small>(95% CI)</small>",
+                 label     = "HiSCR-Original (Yes)",
+                 p.value   = "-log10(p-value)",
+                 all_stat_cols() ~ "{level} <br><small>N = {n}</small>",
+                 text_interpret = 'html') %>%
+   modify_footnote(update = everything() ~ NA)
+```
+
+Column
+--------------------------------------------------
+
+### RESULTS TABLE 
+
+```{r table-reactable}
+reactable( 
+   dd_cross,
+   theme = fivethirtyeight(centered = TRUE, header_font_size = 12),
+   pagination   = FALSE,
+   showSortIcon = FALSE,
+   highlight = TRUE,
+   # compact      = TRUE,
+   # height       = 800, 
+   selection = "multiple", onClick = "select",
+   defaultSorted = list(p_l10 = "desc"),
+   columnGroups = list(
+      colGroup(name = "definition of HiSCR response", columns = c("an.count", "abscesses","drain.fist")),
+      colGroup(name = "Two-Sample Proportions Test", columns = c("p_a","n_a","p_p","n_p","d_e","d_f","p_l10"))
+   ),
+   defaultColDef = colDef(align = 'right',
+                          sortable = FALSE),
+   columns = list(
+      d_l = colDef(show = F),
+      d_u = colDef(show = F),
+      an.count = colDef(show = T,
+                        sortable = TRUE,
+                        name = 'AN Count',
+                        maxWidth = 65),
+      abscesses = colDef(show = T,
+                         sortable = TRUE,
+                         name = 'draining fistulae',
+                         maxWidth = 65),
+      drain.fist = colDef(show = T,
+                          sortable = TRUE,
+                          name = 'abscesses',
+                          maxWidth = 75),
+      p_a = colDef(name = 'Active <br><small>N = 200</small>',
+                   html = TRUE,
+                   maxWidth = 70,
+                   format = colFormat(suffix = '%',
+                                      digits = 1),
+                   cell = merge_column(dd_mod, "n_a")
+      ),
+      n_a = colDef(show = F),
+      p_p = colDef(name = 'Placebo <br><small>N = 200</small>',
+                   html = TRUE,
+                   maxWidth = 70,
+                   format = colFormat(suffix = '%',
+                                      digits = 1),
+                   cell = merge_column(dd_mod, "n_p")),
+      n_p = colDef(show = F),
+      
+      d_e = colDef(name = 'Difference (95%CI)<br><small>(Active-Placebo)</small>',
+                   html = TRUE,
+                   align = 'right',
+                   cell = merge_column(dd_mod, "d_c"),
+                   width = 125),
+      
+      n_y = colDef(show = F),
+      d_n = colDef(show = F),
+      d_c = colDef(show = F),
+      d_l = colDef(show = F),
+      d_u = colDef(show = F),
+      
+      p_l10 = colDef(name = "UNADJ <br><small>-log10(p-value)</small>",
+                     sortable = TRUE,
+                     maxWidth = 65,
+                     html = TRUE,
+                     format = colFormat(digits = 2)),
+      
+      p_n   = colDef(show = F,
+                     name = "UNADJ <br>p-value",
+                     html = TRUE,
+                     format = colFormat(digits = 3)),
+      
+      d_f   = colDef(name = "UNADJ <br><small>p-value</small>",
+                     maxWidth = 65,
+                     html = TRUE,
+                     align = 'right')
+   )
+)
+```
+
+
+
