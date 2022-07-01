@@ -1,6 +1,6 @@
-### Details for the submission [here](https://github.com/agstn/heatmaps_rlc)
+### Details for the submission [here](https://github.com/agstn/PatientProfiler)
 
-### Uncertainty in study planning
-[Study data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2022/2022-01-12). Presented on **January 12th, 2022** 
+### Designing visual patient profiles
+[Study data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2022/2022-06-08). Presented on **June 8thth, 2022** 
 
-<img src="https://raw.githubusercontent.com/agstn/heatmaps_rlc/main/heatmaps_rlc.png" width="100%" height="100%">
+<img src="https://raw.githubusercontent.com/agstn/PatientProfiler/main/PatientProfiler.png" width="90%" height="90%">
