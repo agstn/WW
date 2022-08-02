@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+   <html>
+   <head>
+   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+      <title>LineUp bayesian_ranking</title>
+      <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+         <meta name="robots" content="noindex, nofollow">
+            <meta name="googlebot" content="noindex, nofollow">
+               <meta name="viewport" content="width=device-width, initial-scale=1">
+                  
+                  
+                  <script
+               type="text/javascript"
+               src="/js/lib/dummy.js"
+               
+               ></script>
+                  
+                  <link rel="stylesheet" type="text/css" href="/css/result-light.css">
+                  
+                  <link rel="stylesheet" type="text/css" href="https://unpkg.com/lineupjs@4.0.0/build/LineUpJS.css">
+                  <script type="text/javascript" src="https://unpkg.com/lineupjs@4.0.0/build/LineUpJS.js"></script>
+                  <script type="text/javascript" src="https://unpkg.com/papaparse"></script>
+                  
+                  <style id="compiled-css" type="text/css">
+                  .lu {
+                     clear: both;
+                     position: absolute;
+                     top: 1px;
+                     bottom: 0;
+                     left: 0;
+                     right: 0;
+                     padding: 0;
+                  }
+               
+               
+               /* EOS */
+                  </style>
+                  
+                  <script id="insert"></script>
+                  
+                  </head>
+                  <body>
+                  <script id="data" type="text/csv">Treatment,Rank1,Rank2,Rank3,Rank4,Rank5,Rank6,Rank7,Rank8,Rank9,Rank10,Rank11,Rank12
+                  mirtazapine,0.555875,0.20725,0.122625,0.07775,0.024375,0.008875,0.001875,0.00075,0.000375,0.00025,0,0
+                  escitalopram,0.256125,0.32825,0.225,0.13625,0.042375,0.010125,0.0015,0.00025,0.000125,0,0,0
+                  venlafaxine,0.10775,0.25625,0.28875,0.24,0.079625,0.021625,0.0045,0.000875,5.00E-04,0.000125,0,0
+                  sertraline,0.062875,0.167875,0.264125,0.318,0.12525,0.0425,0.0145,0.003625,0.00075,0.000375,0.000125,0
+                  milnacipran,0.012,0.017625,0.029875,0.0425,0.09475,0.099,0.09875,0.090125,0.10725,0.146125,0.247125,0.014875
+                  citalopram,0.00225,0.01075,0.0315,0.089375,0.26325,0.235875,0.15375,0.08725,0.060625,0.0465,0.018875,0
+                  bupropion,0.002,0.005125,0.0195,0.050375,0.203,0.233875,0.1665,0.119375,0.088,0.069375,0.04225,0.000625
+                  fluvoxamine,0.00075,0.004,0.008625,0.02025,0.0725,0.105125,0.10875,0.100625,0.126,0.17975,0.26575,0.007875
+                  duloxetine,0.000375,0.00275,0.00925,0.02125,0.056,0.0905,0.117375,0.125625,0.130875,0.186125,0.2525,0.007375
+                  fluoxetine,0,0,0,0.00025,0.00825,0.05175,0.146375,0.23825,0.25775,0.20775,0.089625,0
+                  paroxetine,0,0.000125,0.00075,0.004,0.030625,0.10075,0.186,0.23275,0.226,0.161,0.057875,0.000125
+                  reboxetine,0,0,0,0,0,0,0.000125,5.00E-04,0.00175,0.002625,0.025875,0.969125</script>
+                  
+                  <script id="dump" type="application/json">{
+                     "$schema": "https://lineup.js.org/develop/schema.4.0.0.json",
+                     "uid": 24,
+                     "selection": [],
+                     "aggregations": {},
+                     "rankings": [
+                        {
+                           "columns": [
+                              {
+                                 "id": "col0",
+                                 "desc": {
+                                    "type":  "aggregate",
+                                    "label": "Aggregate Groups",
+                                    "fixed": true,
+                                    "width": 40
+                                 },
+                                 "width": 40
+                              },
+                              {
+                                 "id": "col1",
+                                 "desc": {
+                                    "type": "rank",
+                                    "label": "Rank",
+                                    "width": 50
+                                 },
+                                 "width": 50
+                              },
+                              {
+                                 "id": "col2",
+                                 "desc": "string@Treatment",
+                                 "width": 200,
+                                 "label": "TRT",
+                                 "loaded": true,
+                                 "filter": null,
+                                 "groupCriteria": {
+                                    "type": "startsWith",
+                                    "values": []
+                                 }
+                              },
+                              {
+                                 "id": "col20",
+                                 "desc": {
+                                    "type": "stack",
+                                    "label": "Weighted Sum",
+                                    "renderer": "stack",
+                                    "groupRenderer": "stack",
+                                    "summaryRenderer": "default"
+                                 },
+                                 "width": 300,
+                                 "label": "Top 3 Ranks (Weighted Sum)",
+                                 "groupRenderer": "boxplot",
+                                 "summaryRenderer": "default",
+                                 "children": [
+                                    {
+                                       "id": "col3",
+                                       "desc": "number@Rank1",
+                                       "width": 100,
+                                       "label": "R1",
+                                       "groupRenderer": "boxplot",
+                                       "summaryRenderer": "boxplot",
+                                       "loaded": true,
+                                       "map": {
+                                          "type": "linear",
+                                          "domain": [
+                                             0,
+                                             0.6
+                                          ],
+                                          "range": [
+                                             0,
+                                             1
+                                          ]
+                                       },
+                                       "colorMapping": "#1f77b4",
+                                       "filter": null,
+                                       "groupSortMethod": "median",
+                                       "stratifyThreshholds": []
+                                    },
+                                    {
+                                       "id": "col4",
+                                       "desc": "number@Rank2",
+                                       "width": 100,
+                                       "label": "R2",
+                                       "groupRenderer": "boxplot",
+                                       "summaryRenderer": "boxplot",
+                                       "loaded": true,
+                                       "map": {
+                                          "type": "linear",
+                                          "domain": [
+                                             0,
+                                             0.6
+                                          ],
+                                          "range": [
+                                             0,
+                                             1
+                                          ]
+                                       },
+                                       "colorMapping": "#ff7f0e",
+                                       "filter": null,
+                                       "groupSortMethod": "median",
+                                       "stratifyThreshholds": []
+                                    },
+                                    {
+                                       "id": "col5",
+                                       "desc": "number@Rank3",
+                                       "width": 100,
+                                       "label": "R3",
+                                       "groupRenderer": "boxplot",
+                                       "summaryRenderer": "boxplot",
+                                       "loaded": true,
+                                       "map": {
+                                          "type": "linear",
+                                          "domain": [
+                                             0,
+                                             0.6
+                                          ],
+                                          "range": [
+                                             0,
+                                             1
+                                          ]
+                                       },
+                                       "colorMapping": "#2ca02c",
+                                       "filter": null,
+                                       "groupSortMethod": "median",
+                                       "stratifyThreshholds": []
+                                    }
+                                 ],
+                                 "collapsed": false
+                              },
+                              {
+                                 "id": "col6",
+                                 "desc": "number@Rank4",
+                                 "width": 75,
+                                 "label": "R4",
+                                 "groupRenderer": "boxplot",
+                                 "summaryRenderer": "boxplot",
+                                 "loaded": true,
+                                 "map": {
+                                    "type": "linear",
+                                    "domain": [
+                                       0,
+                                       0.6
+                                    ],
+                                    "range": [
+                                       0,
+                                       1
+                                    ]
+                                 },
+                                 "colorMapping": "#999999",
+                                 "filter": null,
+                                 "groupSortMethod": "median",
+                                 "stratifyThreshholds": []
+                              },
+                              {
+                                 "id": "col7",
+                                 "desc": "number@Rank5",
+                                 "width": 75,
+                                 "label": "R5",
+                                 "groupRenderer": "boxplot",
+                                 "summaryRenderer": "boxplot",
+                                 "loaded": true,
+                                 "map": {
+                                    "type": "linear",
+                                    "domain": [
+                                       0,
+                                       0.6
+                                    ],
+                                    "range": [
+                                       0,
+                                       1
+                                    ]
+                                 },
+                                 "colorMapping": "#999999",
+                                 "filter": null,
+                                 "groupSortMethod": "median",
+                                 "stratifyThreshholds": []
+                              },
+                              {
+                                 "id": "col8",
+                                 "desc": "number@Rank6",
+                                 "width": 75,
+                                 "label": "R6",
+                                 "groupRenderer": "boxplot",
+                                 "summaryRenderer": "boxplot",
+                                 "loaded": true,
+                                 "map": {
+                                    "type": "linear",
+                                    "domain": [
+                                       0,
+                                       0.6
+                                    ],
+                                    "range": [
+                                       0,
+                                       1
+                                    ]
+                                 },
+                                 "colorMapping": "#999999",
+                                 "filter": null,
+                                 "groupSortMethod": "median",
+                                 "stratifyThreshholds": []
+                              },
+                              {
+                                 "id": "col9",
+                                 "desc": "number@Rank7",
+                                 "width": 75,
+                                 "label": "R7",
+                                 "groupRenderer": "boxplot",
+                                 "summaryRenderer": "boxplot",
+                                 "loaded": true,
+                                 "map": {
+                                    "type": "linear",
+                                    "domain": [
+                                       0,
+                                       0.6
+                                    ],
+                                    "range": [
+                                       0,
+                                       1
+                                    ]
+                                 },
+                                 "colorMapping": "#999999",
+                                 "filter": null,
+                                 "groupSortMethod": "median",
+                                 "stratifyThreshholds": []
+                              },
+                              {
+                                 "id": "col10",
+                                 "desc": "number@Rank8",
+                                 "width": 75,
+                                 "label": "R8",
+                                 "groupRenderer": "boxplot",
+                                 "summaryRenderer": "boxplot",
+                                 "loaded": true,
+                                 "map": {
+                                    "type": "linear",
+                                    "domain": [
+                                       0,
+                                       0.6
+                                    ],
+                                    "range": [
+                                       0,
+                                       1
+                                    ]
+                                 },
+                                 "colorMapping": "#999999",
+                                 "filter": null,
+                                 "groupSortMethod": "median",
+                                 "stratifyThreshholds": []
+                              },
+                              {
+                                 "id": "col11",
+                                 "desc": "number@Rank9",
+                                 "width": 75,
+                                 "label": "R9",
+                                 "groupRenderer": "boxplot",
+                                 "summaryRenderer": "boxplot",
+                                 "loaded": true,
+                                 "map": {
+                                    "type": "linear",
+                                    "domain": [
+                                       0,
+                                       0.6
+                                    ],
+                                    "range": [
+                                       0,
+                                       1
+                                    ]
+                                 },
+                                 "colorMapping": "#999999",
+                                 "filter": null,
+                                 "groupSortMethod": "median",
+                                 "stratifyThreshholds": []
+                              },
+                              {
+                                 "id": "col12",
+                                 "desc": "number@Rank10",
+                                 "width": 75,
+                                 "label": "R10",
+                                 "groupRenderer": "boxplot",
+                                 "summaryRenderer": "boxplot",
+                                 "loaded": true,
+                                 "map": {
+                                    "type": "linear",
+                                    "domain": [
+                                       0,
+                                       0.6
+                                    ],
+                                    "range": [
+                                       0,
+                                       1
+                                    ]
+                                 },
+                                 "colorMapping": "#999999",
+                                 "filter": null,
+                                 "groupSortMethod": "median",
+                                 "stratifyThreshholds": []
+                              },
+                              {
+                                 "id": "col13",
+                                 "desc": "number@Rank11",
+                                 "width": 75,
+                                 "label": "R11",
+                                 "groupRenderer": "boxplot",
+                                 "summaryRenderer": "boxplot",
+                                 "loaded": true,
+                                 "map": {
+                                    "type": "linear",
+                                    "domain": [
+                                       0,
+                                       0.6
+                                    ],
+                                    "range": [
+                                       0,
+                                       1
+                                    ]
+                                 },
+                                 "colorMapping": "#999999",
+                                 "filter": null,
+                                 "groupSortMethod": "median",
+                                 "stratifyThreshholds": []
+                              },
+                              {
+                                 "id": "col14",
+                                 "desc": "number@Rank12",
+                                 "width": 75,
+                                 "label": "R12",
+                                 "groupRenderer": "boxplot",
+                                 "summaryRenderer": "boxplot",
+                                 "loaded": true,
+                                 "map": {
+                                    "type": "linear",
+                                    "domain": [
+                                       0,
+                                       0.99
+                                    ],
+                                    "range": [
+                                       0,
+                                       1
+                                    ]
+                                 },
+                                 "colorMapping": "#999999",
+                                 "filter": null,
+                                 "groupSortMethod": "median",
+                                 "stratifyThreshholds": []
+                              },
+                              {
+                                 "id": "col23",
+                                 "desc": {
+                                    "type": "selection",
+                                    "label": "Selection Checkboxes",
+                                    "fixed": true,
+                                    "width": 20
+                                 },
+                                 "width": 20,
+                                 "loaded": true
+                              }
+                           ],
+                           "sortCriteria": [
+                              {
+                                 "asc": false,
+                                 "sortBy": "col20"
+                              }
+                           ],
+                           "groupSortCriteria": [],
+                           "groupColumns": [
+                              "col23"
+                           ]
+                        }
+                     ],
+                     "showTopN": 12
+                  }</script>
+                  
+                  <script type="text/javascript">//<![CDATA[
+                     
+                     const parsed = Papa.parse(document.querySelector('#data').textContent, {
+                        dynamicTyping: true,
+                        header: true,
+                        skipEmptyLines: true
+                     });
+                     const dump = JSON.parse(document.querySelector('#dump').textContent);
+                     
+                     const lineup = LineUpJS
+                     .builder(parsed.data)
+                     .deriveColumns(parsed.meta.fields)
+                     .deriveColors()
+                     .rowHeight(35)
+                     .sidePanel(0)
+                     .restore(dump)
+                     .build(document.body);
+                     
+                     //]]></script>
+                  
+                  <script>
+                  // tell the embed parent frame the height of the content
+               if (window.parent && window.parent.parent){
+                  window.parent.parent.postMessage(["resultsFrame", {
+                     height: document.body.getBoundingClientRect().height,
+                     slug: "ts64f2zd"
+                  }], "*")
+               }
+               
+               // always overwrite window.name, in case users try to set it manually
+               window.name = "result"
+               </script>
+                  
+                  
+                  </body>
+                  </html>
+                  

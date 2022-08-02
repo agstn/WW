@@ -1,0 +1,50 @@
+---
+title:      Visualising (Bayesian) Ranking Data
+author:     Agustin Calatroni
+date:       "`r format(Sys.Date(), format='%a %d %b %Y')`" 
+output: 
+   flexdashboard::flex_dashboard:
+      vertical_layout: fill
+      self_contained: true
+---
+
+```{=html}
+<style>
+element.style {
+width: 1200px;
+height: 1000px;
+margin-top: 10px;
+margin-bottom: 10px;
+}
+</style>
+```
+
+```{css, echo=FALSE}
+.bgwhite {
+   background-color: white;
+}
+
+.bgblue {
+   background-color: rgba(39, 128, 227, 0.1);
+}
+```
+
+```{r knitr-defaults}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, comment = NA)
+knitr::opts_chunk$set(cache = FALSE)
+options(width=170)
+```
+
+### [LineUp Visualization](https://lineup.js.org/) {data-height=775}
+
+<iframe src ="bayesian_ranking_lineup.html"
+  style="border: none; width: 100%; height: 700px;"/>
+</iframe>
+
+### [Data Challange](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2022/2022-07-13) {data-height=225 .bgblue}
+
+The treatment response of 12 treatments for major depression was investigated over 111 trials.  
+Treatment response was defined as a **reduction of at least 50% from the baseline score on the  Hamilton Depression Rating Scale (HAM-D) or the Montgomery-Asberg Depression Rating Scale (MADRS) at week 8** (or, if not available, another time between week 6 and 12).  
+
+The dataset supplied for this challenge contains the ranking probabilities of the 12 different treatments for depression from Ranks 1-12. Each “Rank” cell contains the probability of each treatment receiving that ranking (preferred direction = 1 i.e. a treatment being Rank 1 indicates it being the most effective).
+
