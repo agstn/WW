@@ -98,3 +98,10 @@ Visualizing Risk Prediction Models. For each predictor, a color bar represents t
 [Study data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2022/2022-06-08). Presented on **June 8thth, 2022** 
 
 <img src="https://raw.githubusercontent.com/agstn/PatientProfiler/main/PatientProfiler.png" width="100%" height="100%">
+
+### [Visualising Ranking Data](https://rpubs.com/acalatroni/929092)
+[Study data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2022/2022-07-13). Presented on **July 13th, 2022** 
+
+<a href="https://rpubs.com/acalatroni/929092">
+<img src="https://raw.githubusercontent.com/agstn/WW/main/2022-07-13/bayesian_ranking.png" width="100%" height="100%">
+</a>
