@@ -109,3 +109,9 @@ Visualizing Risk Prediction Models. For each predictor, a color bar represents t
 ###  [Prediction of health status (EQ-5D)](https://github.com/agstn/WW/tree/main/2022-08-10)
 [Study data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2022/2022-08-10). Presented on **August 8th, 2022** 
 <img src="https://raw.githubusercontent.com/agstn/WW/main/2022-08-10/ed5d_relaimpo.png" width="90%" height="90%">
+
+### [QLQ-C30 Cancer Trial](https://agstn.github.io/qlq-c30/qlq-c30_flexdashboard.html)
+[Study data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2022/2022-09-14). Presented on **September 14th, 2022** 
+<img src="https://raw.githubusercontent.com/agstn/qlq-c30/main/qlq-c30_flexdashboard.png" width="100%" height="100%">
+
+
