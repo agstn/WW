@@ -4,4 +4,4 @@
 
 <img src="https://raw.githubusercontent.com/agstn/WW/main/2023-03-08/WWWDiary_Aching.png" width="100%" height="100%">
 
-<img src="https://raw.githubusercontent.com/agstn/WW/main/2023-03-08/WWWDiary.png" width="60%" height="60%">
+<img src="https://raw.githubusercontent.com/agstn/WW/main/2023-03-08/WWWDiary.png" width="80%" height="80%">
