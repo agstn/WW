@@ -57,7 +57,7 @@ Visualizing Risk Prediction Models. For each predictor, a color bar represents t
 ## [Patient Reported Outcomes (PROs) Instrument Properties](https://rpubs.com/acalatroni/787125)
 [Psychometric Overview](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-06-09). Presented on **June 6th, 2021**
   
-<img src="https://raw.githubusercontent.com/agstn/WW/main/2021-06-09/fpca.png" width="60%" height="60%">
+<img src="https://raw.githubusercontent.com/agstn/WW/main/2021-06-09/Patient Reported Outcomes (PROs).png" width="85%" height="85%">
 
 ### [Continuous Glucose Monitoring (CGM) Visualization](https://agstn.github.io/CGM/)  
 [Study data set](https://github.com/VIS-SIG/Wonderful-Wednesdays/tree/master/data/2021/2021-08-11). Presented on **August 11th, 2021** 
